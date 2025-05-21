@@ -4,10 +4,10 @@
 #include <stdio.h> 
 
 // ipV4 = 4 octets 32 bits
-typedef unsigned char AdressesIPv4[4];
+typedef unsigned char AdresseIPv4[4];
 
 // fonction affichage IP
-void AfficherIP(AdressesIPv4 ip);
+void AfficherIP(AdresseIPv4 ip);
 
 
 // fonction lire IP ?
