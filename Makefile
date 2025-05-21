@@ -7,19 +7,24 @@ SRC = main.c \
       src/station.c \
       src/switch.c
 
-OBJ = $(SRC:.c=.o)
-EXEC = reseauSimu
+OBJ = $(patsubst %.c,bin/%.o,$(notdir $(SRC)))
+
+EXEC = bin/reseauSimu
 
 all: $(EXEC)
 
 $(EXEC): $(OBJ)
 	$(CC) $(CFLAGS) -o $@ $^
 
-%.o: %.c
-	$(CC) $(CFLAGS) -o $@ -c $<
+bin/%.o: src/%.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+bin/main.o: main.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(EXEC)
+	rm -f bin/*.o $(EXEC)
 
 run: all
 	./$(EXEC)
+
