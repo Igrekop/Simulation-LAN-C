@@ -2,8 +2,8 @@ CC = gcc
 CFLAGS = -Wall -Wextra -Iinclude
 SRC = main.c \
       src/graphe.c \
-      src/ip_adresses.c \
-      src/mac_addresses.c \
+      src/ip_adresse.c \
+      src/mac_adresse.c \
       src/station.c \
       src/switch.c
 
