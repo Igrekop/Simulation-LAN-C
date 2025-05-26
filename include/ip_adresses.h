@@ -1,4 +1,3 @@
-#ifndef IP_ADRESSES_H
 #define IP_ADRESSES_H
 
 #include <stdio.h> 

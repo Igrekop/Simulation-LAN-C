@@ -1,4 +1,3 @@
-#ifndef MAC_ADRESSE_H
 #define MAC_ADRESSE_H
 
 #include <stdlib.h>
