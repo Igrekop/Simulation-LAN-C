@@ -24,9 +24,9 @@ void afficher_switch(Switch sw) {
 
 void afficher_equipement(Equipement e) {
     if (e.type == STATION) {
-        afficher_station(e.u.station);
+        afficher_station(e.typequipement.station);
     } else if (e.type == SWITCH) {
-        afficher_switch(e.u.sw);
+        afficher_switch(e.typequipement.sw);
     }
 }
 
@@ -43,7 +43,11 @@ void afficher_reseau(const ReseauLocal* reseau) {
 
     printf("-- Matrice d’adjacence (coût des liens) --\n    ");
     for (int i = 0; i < reseau->nb_equipements; i++) {
-        printf("%3d", i);
+        printf("%3d | ", i);
+    }
+    printf("\n");
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        printf("--------");
     }
     printf("\n");
 

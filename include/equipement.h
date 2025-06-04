@@ -33,7 +33,7 @@ typedef struct {
     union {
         Station station;
         Switch sw;
-    } u;
+    } typequipement;
 } Equipement;
 
 typedef struct {
