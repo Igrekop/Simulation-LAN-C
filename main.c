@@ -24,4 +24,5 @@ int main() {
 
     afficher_reseau(&r);
     return 0;
+    // Affichage du réseau
 }
