@@ -8,14 +8,15 @@ SRC = main.c \
       $(SRC_DIR)/reseau.c
 
 OBJ = $(patsubst %.c,$(BIN_DIR)/%.o,$(notdir $(SRC)))
+
 EXEC = $(BIN_DIR)/reseauSimu
 
-all: $(BIN_DIR) $(EXEC)
+all: $(EXEC)
 
 $(BIN_DIR):
-	mkdir -p $(BIN_DIR)
+	@mkdir -p $(BIN_DIR)
 
-$(EXEC): $(OBJ)
+$(EXEC): $(OBJ) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.c | $(BIN_DIR)
@@ -26,16 +27,20 @@ $(BIN_DIR)/main.o: main.c | $(BIN_DIR)
 
 TEST_EXEC = $(BIN_DIR)/test_affichage
 
-tests: $(BIN_DIR) $(TEST_EXEC)
+tests: $(TEST_EXEC)
 
-$(TEST_EXEC): tests/test_affichage.c $(BIN_DIR)/reseau.o $(BIN_DIR)/equipement.o
+$(TEST_EXEC): tests/test_affichage.c $(BIN_DIR)/reseau.o $(BIN_DIR)/equipement.o | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $^
 
 run-tests: tests
 	./$(TEST_EXEC)
 
 clean:
-	rm -f $(BIN_DIR)/*.o $(EXEC) $(TEST_EXEC)
+	@echo "Nettoyage des fichiers compilés..."
+	@rm -f $(BIN_DIR)/*.o $(EXEC) $(TEST_EXEC) # Supprime les .o et les exécutables
+	@rmdir $(BIN_DIR) 2>/dev/null || true # Tente de supprimer le dossier bin s'il est vide, ignore l'erreur sinon
 
 run: all
 	./$(EXEC)
+
+.PHONY: all clean run tests run-tests

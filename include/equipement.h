@@ -24,8 +24,8 @@ typedef struct {
 
 // Type d'équipement
 typedef enum {
-    STATION,
-    SWITCH
+    STATION = 1,
+    SWITCH = 2
 } TypeEquipement;
 
 typedef struct {
@@ -36,7 +36,7 @@ typedef struct {
     } typequipement;
 } Equipement;
 
-typedef struct {
+typedef struct ReseauLocal {
     Equipement equipements[MAX_EQUIPES];
     int nb_equipements;
     int matrice_adjacence[MAX_EQUIPES][MAX_EQUIPES];
