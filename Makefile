@@ -5,7 +5,8 @@ BIN_DIR = bin
 
 SRC = main.c \
       $(SRC_DIR)/equipement.c \
-      $(SRC_DIR)/reseau.c
+      $(SRC_DIR)/reseau.c \
+      $(SRC_DIR)/trame.c
 
 OBJ = $(patsubst %.c,$(BIN_DIR)/%.o,$(notdir $(SRC)))
 
