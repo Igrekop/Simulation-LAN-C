@@ -42,6 +42,28 @@ void afficher_reseau(const ReseauLocal* reseau) {
         printf("\n");
     }
 
+    printf("-- Matrice d’adjacence (coût des liens) --\n\n    ");
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        printf("%4d", i);
+    }
+    printf("\n   ");
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        printf("----");
+    }
+    printf("\n");
+
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        printf("%3d|", i);
+        for (int j = 0; j < reseau->nb_equipements; j++) {
+            int poids = reseau->matrice_adjacence[i][j];
+            if (poids == 0)
+                printf("   .");
+            else
+                printf("%4d", poids);
+        }
+        printf("\n");
+    }
+    printf("\nLégende : . = pas de lien\n");
     // Faire affichage table de commutations sous la forme
     // Entrée 1 --> Sortie 0
     // Entrée 0 --> Sortie 2
