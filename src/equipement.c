@@ -56,7 +56,7 @@ void afficher_reseau(const ReseauLocal* reseau) {
         printf("%3d|", i);
         for (int j = 0; j < reseau->nb_equipements; j++) {
             int poids = reseau->matrice_adjacence[i][j];
-            if (poids == 0)
+            if (poids == -1)
                 printf("   .");
             else
                 printf("%4d", poids);

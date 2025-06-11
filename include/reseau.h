@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <stdint.h>
-//Chatos
+
 typedef struct ReseauLocal ReseauLocal;
 
 // Adresse MAC = 6 octets = 48 bits -> on utilise un entier 64 bits (on n'utilise que les 48 bits de poids faible)

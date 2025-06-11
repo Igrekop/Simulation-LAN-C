@@ -1,4 +1,4 @@
-    #include <stdio.h>
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
@@ -87,7 +87,11 @@ int charger_reseau_fichier(const char* nom_fichier, ReseauLocal* reseau) {
             reseau->equipements[i].typequipement.station.ip = convertir_en_ip(ip_str);
         }
     }
-
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        for (int j = 0; j < reseau->nb_equipements; j++) {
+            reseau->matrice_adjacence[i][j] = -1;
+        }
+    }
     for (int k = 0; k < nb_liens_lus; k++) {
         int eq1, eq2, poids;
         fscanf(fichier, "%d;%d;%d\n", &eq1, &eq2, &poids);
