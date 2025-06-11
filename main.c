@@ -87,21 +87,27 @@ int main() {
 
             case 3:
                 printf("\n=== TRAME ETHERNET DE TEST ===\n");
-                trame t = {0};
-                uint8_t mac_src[6]  = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
-                uint8_t mac_dest[6] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
-                
-                memcpy(t.src_mac, mac_src, 6);
-                memcpy(t.dest_mac, mac_dest, 6);
-                t.ethertype = 0x0800;
+                trame t = {0}; 
 
+   
+                const char* mac_src_str = "AA:BB:CC:DD:EE:FF";
+                const char* mac_dest_str = "01:45:23:a6:f7:ab";
+
+                t.src_mac = convertir_en_mac(mac_src_str);
+                t.dest_mac = convertir_en_mac(mac_dest_str);
+
+                t.ethertype = 0x0800; 
+
+                
                 const char *message = "Bonjour je suis Yvann et je pue";
                 size_t message_len = strlen(message);
                 memcpy(t.DATA.contenu.data, message, message_len);
+                t.DATA.contenu.data[message_len] = '\0'; 
 
                 afficher_trame(&t);
-                printf("\nAffichage détaillé de la trame :\n");
                 afficher_trame_complete(&t);
+                
+                recevoir(&t,&(mon_reseau.equipements[0]));
                 break;
 
             case 0:
