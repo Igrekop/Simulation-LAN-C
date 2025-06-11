@@ -12,7 +12,7 @@ void afficher_switch(Switch sw) {
     printf("  MAC      : "); afficher_mac(sw.mac); printf("\n");
     printf("  Ports    : %d\n", sw.nb_ports);
     printf("  Priorité : %d\n", sw.priorite);
-    printf("  Table de commutation :\n");
+    printf("  Table de commutation : (encore à faire)\n");
     for (int i = 0; i < sw.nb_ports; i++) {
         if (sw.table_commutation[i] != 0) { // 0 = port vide
             printf("    Port %d → ", i);
@@ -32,9 +32,9 @@ void afficher_equipement(Equipement e) {
 }
 
 void afficher_reseau(const ReseauLocal* reseau) {
-    printf("=== Réseau local ===\n");
+    printf("    Réseau local :\n");
     printf("Nombre d'équipements : %d\n", reseau->nb_equipements);
-    printf("\n-- Équipements --\n");
+    printf("\n   Équipements    \n");
 
     for (int i = 0; i < reseau->nb_equipements; i++) {
         printf("[Équipement #%d]\n", i);
