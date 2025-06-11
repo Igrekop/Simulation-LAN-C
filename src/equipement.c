@@ -12,13 +12,14 @@ void afficher_switch(Switch sw) {
     printf("  MAC      : "); afficher_mac(sw.mac); printf("\n");
     printf("  Ports    : %d\n", sw.nb_ports);
     printf("  Priorité : %d\n", sw.priorite);
-    printf("  Table de commutation :\n");
+    printf("  Table de commutation : (encore à faire)\n");
     for (int i = 0; i < sw.nb_ports; i++) {
         if (sw.table_commutation[i] != 0) { // 0 = port vide
             printf("    Port %d → ", i);
             afficher_mac(sw.table_commutation[i]);
             printf("\n");
         }
+        // faire affichage table
     }
 }
 
@@ -31,9 +32,9 @@ void afficher_equipement(Equipement e) {
 }
 
 void afficher_reseau(const ReseauLocal* reseau) {
-    printf("=== Réseau local ===\n");
+    printf("    Réseau local :\n");
     printf("Nombre d'équipements : %d\n", reseau->nb_equipements);
-    printf("\n-- Équipements --\n");
+    printf("\n   Équipements    \n");
 
     for (int i = 0; i < reseau->nb_equipements; i++) {
         printf("[Équipement #%d]\n", i);
@@ -41,23 +42,29 @@ void afficher_reseau(const ReseauLocal* reseau) {
         printf("\n");
     }
 
-    printf("-- Matrice d’adjacence (coût des liens) --\n    ");
+    printf("-- Matrice d’adjacence (coût des liens) --\n\n    ");
     for (int i = 0; i < reseau->nb_equipements; i++) {
-        printf("%3d | ", i);
+        printf("%4d", i);
     }
-    printf("\n");
+    printf("\n   ");
     for (int i = 0; i < reseau->nb_equipements; i++) {
-        printf("--------");
+        printf("----");
     }
     printf("\n");
 
     for (int i = 0; i < reseau->nb_equipements; i++) {
-        printf("%3d ", i);
+        printf("%3d|", i);
         for (int j = 0; j < reseau->nb_equipements; j++) {
             int poids = reseau->matrice_adjacence[i][j];
-            if (poids == 0) printf("  .");
-            else printf("%3d", poids);
+            if (poids == -1)
+                printf("   .");
+            else
+                printf("%4d", poids);
         }
         printf("\n");
     }
+    printf("\nLégende : . = pas de lien\n");
+    // Faire affichage table de commutations sous la forme
+    // Entrée 1 --> Sortie 0
+    // Entrée 0 --> Sortie 2
 }
