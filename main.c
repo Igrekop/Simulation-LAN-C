@@ -8,7 +8,7 @@
 
 int main() {
 
-    printf("Partie 1 : Création et affichage d'un système réseau\n");
+    /*printf("Partie 1 : Création et affichage d'un système réseau\n");
     printf("\n");
 
     // Partie 1
@@ -33,7 +33,7 @@ int main() {
 
     afficher_reseau(&r);
     //return 0; // --> en commentaire pour pouvoir continuer
-    // Affichage du réseau
+    // Affichage du réseau*/
     
 
     printf("\nPartie 2 : Lire et afficher un système à partir d'un fichier annexe\n");
@@ -58,7 +58,7 @@ int main() {
     // Affichage du réseau chargé
     afficher_reseau(&mon_reseau);
     
-        printf("\n Création et affichage d'une trame(test)\n");
+    printf("\n Partie 3 : Création et affichage d'une trame(test)\n");
 
     trame t = {0}; // Initialisation à 0
 
