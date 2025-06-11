@@ -5,6 +5,9 @@
 
 int main() {
 
+    printf("Partie 1 : Création et affichage d'un système réseau\n");
+    printf("\n");
+
     // Partie 1
     ReseauLocal r = {0};
     r.nb_equipements = 2;
@@ -30,7 +33,9 @@ int main() {
     // Affichage du réseau
     
 
-    // Partie 2
+    printf("\nPartie 2 : Lire et afficher un système à partir d'un fichier annexe\n");
+    printf(" \n");
+
     ReseauLocal mon_reseau; // Déclare une structure ReseauLocal
     
     // Initialisation de base au cas où le chargement échoue
