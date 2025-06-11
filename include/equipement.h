@@ -47,5 +47,6 @@ void afficher_station(Station s);
 void afficher_switch(Switch sw);
 void afficher_equipement(Equipement e);
 void afficher_reseau(const ReseauLocal* reseau);
+void afficher_matrice_adjacence(const ReseauLocal* reseau);
 
 #endif
