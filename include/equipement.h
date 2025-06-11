@@ -24,7 +24,7 @@ typedef struct {
 
 // Type d'équipement
 typedef enum {
-    STATION = 1,
+    STATION = 1, 
     SWITCH = 2
 } TypeEquipement;
 
@@ -39,7 +39,7 @@ typedef struct {
 typedef struct ReseauLocal {
     Equipement equipements[MAX_EQUIPES];
     int nb_equipements;
-    int matrice_adjacence[MAX_EQUIPES][MAX_EQUIPES];
+    int matrice_adjacence[MAX_EQUIPES][MAX_EQUIPES]; // Pour faire la table de commutations
 } ReseauLocal;
 
 // Fonctions d'affichage

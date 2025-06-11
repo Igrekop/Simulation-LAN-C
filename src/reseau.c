@@ -7,12 +7,14 @@
 
     void afficher_mac(AdresseMAC mac) {
         for (int i = 5; i >= 0; i--) {
-            unsigned int octet = (mac >> (8 * i)) & 0xFF;
+            // décalage et masquage ex si i = 5 mac > 40 donc si mac = 00XXXXXX alors mac = 00
+            unsigned int octet = (mac >> (8 * i)) & 0xFF; // 0xFF = 11111111
             printf("%02x", octet);
             if (i > 0) printf(":");
         }
     }
 
+    // même principe
     void afficher_ip(AdresseIP ip) {
         for (int i = 3; i >= 0; i--) {
             printf("%d", (ip >> (8 * i)) & 0xFF);
@@ -22,17 +24,15 @@
 
     //Etape 2 
 
-    // Fonction pour convertir une chaîne MAC (ex: "01:45:23:a6:f7:ab") en AdresseMAC (uint64_t)
+    // fonction pour convertir une chaine MAC (xx:xx..) en AdresseMAC (uint64_t)
     AdresseMAC convertir_en_mac(const char* mac_str) {
         AdresseMAC mac = 0;
         unsigned int octets[6];
-        // Sscanf lit les 6 octets hexadécimaux séparés par ':'
-        // %02x garantit qu'on lit 2 caractères hexadécimaux
         if (sscanf(mac_str, "%02x:%02x:%02x:%02x:%02x:%02x",
                 &octets[0], &octets[1], &octets[2],
                 &octets[3], &octets[4], &octets[5]) != 6) {
             fprintf(stderr, "Erreur de format MAC: %s\n", mac_str);
-            return 0; // Retourne 0 en cas d'erreur de parsing
+            return 0; 
         }
 
         // Combine les octets en un seul uint64_t
@@ -42,11 +42,10 @@
         return mac;
     }
 
-    // Fonction pour convertir une chaîne IP (ex: "130.79.80.21") en AdresseIP (uint32_t)
+    // Fonction pour convertir une chaîne IP (xx:xx:xx:xx) en AdresseIP (uint32_t)
     AdresseIP convertir_en_ip(const char* ip_str) {
         AdresseIP ip = 0;
         unsigned int octets[4];
-        // Sscanf lit les 4 octets décimaux séparés par '.'
         if (sscanf(ip_str, "%d.%d.%d.%d",
                 &octets[0], &octets[1], &octets[2], &octets[3]) != 4) {
             fprintf(stderr, "Erreur de format IP: %s\n", ip_str);
@@ -63,10 +62,11 @@
         FILE* fichier = fopen(nom_fichier, "r");
         if (fichier == NULL) {
             perror("Erreur lors de l'ouverture du fichier de configuration");
-            return -1; // Retourne -1 en cas d'erreur d'ouverture
+            return -1; 
         }
 
-        int nb_equipements_lus, nb_liens_lus;
+        int nb_equipements_lus;
+        int nb_liens_lus;
         // Lecture de la première ligne d'en-tête
         if (fscanf(fichier, "%d %d\n", &nb_equipements_lus, &nb_liens_lus) != 2) {
             fprintf(stderr, "Erreur de lecture de l'en-tête du fichier.\n");
@@ -76,7 +76,7 @@
 
         reseau->nb_equipements = nb_equipements_lus;
 
-        char line_buffer[256]; // Déclaration de line_buffer en dehors de la boucle, car fgets lit la ligne complète.
+        char line_buffer[256]; // pour stocker des lignes entières (max 256)
 
         // Lecture des équipements
         for (int i = 0; i < reseau->nb_equipements; i++) {
