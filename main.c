@@ -36,7 +36,7 @@ void menu_trames_ethernet(ReseauLocal *reseau) {
 
     while (choix != 3) {
         printf("\n=== MENU TRAMES ETHERNET ===\n");
-        printf("1. Envoyer une trame\n");
+        printf("1. Simuler l'envoi d'une trame\n");
         printf("2. Afficher les tables de commutation\n");
         printf("3. Retour au menu principal\n");
         printf("Votre choix : ");
@@ -46,6 +46,8 @@ void menu_trames_ethernet(ReseauLocal *reseau) {
         switch (choix) {
             case 1: {
                 int src_id, dest_id;
+                char message[46]; // Taille maximale des données dans la trame
+                
                 printf("\nListe des équipements disponibles :\n");
                 for (int i = 0; i < reseau->nb_equipements; i++) {
                     printf("%d. ", i);
@@ -65,29 +67,72 @@ void menu_trames_ethernet(ReseauLocal *reseau) {
                 scanf("%d", &dest_id);
                 getchar(); // Consommer le \n
 
+                printf("Entrez le message à envoyer (max 45 caractères) : ");
+                fgets(message, sizeof(message), stdin);
+                message[strcspn(message, "\n")] = 0; // Supprimer le \n final
+
                 if (src_id >= 0 && src_id < reseau->nb_equipements &&
                     dest_id >= 0 && dest_id < reseau->nb_equipements) {
+                    
+                    printf("\n=== SIMULATION D'ENVOI DE TRAME ===\n");
                     
                     // Préparer la trame
                     AdresseMAC src_mac, dest_mac;
                     if (reseau->equipements[src_id].type == STATION) {
                         src_mac = reseau->equipements[src_id].typequipement.station.mac;
+                        printf("Source : Station ");
                     } else {
                         src_mac = reseau->equipements[src_id].typequipement.sw.mac;
+                        printf("Source : Switch ");
                     }
-                    
+                    afficher_mac(src_mac);
+                    printf("\n");
+
                     if (reseau->equipements[dest_id].type == STATION) {
                         dest_mac = reseau->equipements[dest_id].typequipement.station.mac;
+                        printf("Destination : Station ");
                     } else {
                         dest_mac = reseau->equipements[dest_id].typequipement.sw.mac;
+                        printf("Destination : Switch ");
                     }
+                    afficher_mac(dest_mac);
+                    printf("\n");
 
+                    // Initialiser et remplir la trame
                     initialiser_trame(&t, &src_mac, &dest_mac);
-                    printf("\nTrame initialisée :\n");
+                    strncpy((char*)t.DATA.contenu.data, message, sizeof(t.DATA.contenu.data) - 1);
+                    t.DATA.contenu.data[sizeof(t.DATA.contenu.data) - 1] = '\0';
+
+                    printf("\nTrame préparée :\n");
                     afficher_trame(&t);
+                    printf("\nContenu de la trame :\n");
+                    afficher_trame_complete(&t);
                     
+                    printf("\n=== DÉBUT DE LA TRANSMISSION ===\n");
                     // Envoyer la trame
                     envoyer_trame(&t, &reseau->equipements[src_id], &pm, reseau);
+                    printf("=== FIN DE LA TRANSMISSION ===\n");
+
+                    printf("\nÉtat des tables de commutation après transmission :\n");
+                    for (int i = 0; i < reseau->nb_equipements; i++) {
+                        if (reseau->equipements[i].type == SWITCH) {
+                            printf("\nSwitch ");
+                            afficher_mac(reseau->equipements[i].typequipement.sw.mac);
+                            printf(" :\n");
+                            int table_vide = 1;
+                            for (int j = 0; j < MAX_PORTS; j++) {
+                                if (reseau->equipements[i].typequipement.sw.table_commutation[j] != 0) {
+                                    table_vide = 0;
+                                    printf("Port %d -> MAC : ", j);
+                                    afficher_mac(reseau->equipements[i].typequipement.sw.table_commutation[j]);
+                                    printf("\n");
+                                }
+                            }
+                            if (table_vide) {
+                                printf("Table de commutation vide\n");
+                            }
+                        }
+                    }
                 } else {
                     printf("Erreur : indices d'équipements invalides\n");
                 }
