@@ -1,4 +1,4 @@
-    #include <stdio.h>
+#include <stdio.h>
     #include <stdint.h>
     #include <string.h>   // Pour strlen, sscanf
     #include <stdlib.h>   // Pour exit, ou strtol si besoin
