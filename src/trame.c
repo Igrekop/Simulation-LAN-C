@@ -6,8 +6,11 @@
 #include "equipement.h"
 #include "trame.h"
 
+// Déclaration anticipée de propager_trame
+static void propager_trame(const trame *t, Equipement *sw, ReseauLocal *reseau, int src_id, PortManager *pm);
+
 // Adresse MAC de broadcast (FF:FF:FF:FF:FF:FF)
-const AdresseMAC ADRESSE_BROADCAST = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+const AdresseMAC ADRESSE_BROADCAST = 0xFFFFFFFFFFFF;
 
 void afficher_trame(const trame *t) {
     printf("╔══════════════════════════════════════════╗\n");
@@ -135,8 +138,9 @@ int est_broadcast(const AdresseMAC *mac) {
 }
 
 void traiter_trame_station(const trame *t, Equipement *station, PortManager *pm) {
+    (void)pm; // Pour éviter l'avertissement de paramètre non utilisé
     AdresseMAC mac = recevoir(t, station);
-    if (mac != 0) {  // Si la trame a été acceptée
+    if (mac != 0) {
         printf("Station ");
         afficher_mac(station->typequipement.station.mac);
         printf(" traite la trame\n");
@@ -150,8 +154,8 @@ void traiter_trame_switch(const trame *t, Equipement *sw, PortManager *pm, int p
     // Mettre à jour le port avec la dernière adresse MAC source vue
     pm->ports[port_reception].last_src_mac = t->src_mac;
     
-    // Utiliser recevoir() pour vérifier si le switch doit traiter la trame
-    AdresseMAC mac = recevoir(t, sw);
+    // Vérifier si le switch doit traiter la trame
+    (void)recevoir(t, sw); // Pour éviter l'avertissement de variable non utilisée
     
     // Chercher le port de destination dans la table de commutation
     int port_dest = -1;
@@ -176,17 +180,119 @@ void traiter_trame_switch(const trame *t, Equipement *sw, PortManager *pm, int p
 }
 
 void envoyer_trame(const trame *t, Equipement *src, PortManager *pm, ReseauLocal *reseau) {
-    // Trouver l'équipement connecté au port de la station source
-    int port_src = 0;  // On suppose que la station utilise le port 0
-    if (pm->ports[port_src].status == PORT_CONNECTED) {
-        int equip_dest = pm->ports[port_src].connected_to_equip;
-        int port_dest = pm->ports[port_src].connected_to_port;
+    // Trouver l'index de l'équipement source
+    int src_id = -1;
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        if ((src->type == STATION && 
+             memcmp(&reseau->equipements[i].typequipement.station.mac, &src->typequipement.station.mac, sizeof(AdresseMAC)) == 0) ||
+            (src->type == SWITCH && 
+             memcmp(&reseau->equipements[i].typequipement.sw.mac, &src->typequipement.sw.mac, sizeof(AdresseMAC)) == 0)) {
+            src_id = i;
+            break;
+        }
+    }
+
+    if (src_id == -1) {
+        printf("Erreur : équipement source non trouvé dans le réseau\n");
+        return;
+    }
+
+    printf("\nDébut de la transmission depuis ");
+    if (src->type == STATION) {
+        printf("Station ");
+        afficher_mac(src->typequipement.station.mac);
+        printf(" (index %d)\n", src_id);
         
-        // Traiter la trame selon le type d'équipement de destination
-        if (reseau->equipements[equip_dest].type == STATION) {
-            traiter_trame_station(t, &reseau->equipements[equip_dest], pm);
-        } else if (reseau->equipements[equip_dest].type == SWITCH) {
-            traiter_trame_switch(t, &reseau->equipements[equip_dest], pm, port_dest);
+        // Debug : afficher les connexions de la station
+        printf("Connexions de la station dans la matrice d'adjacence :\n");
+        for (int i = 0; i < reseau->nb_equipements; i++) {
+            if (reseau->matrice_adjacence[src_id][i] == 1) {
+                printf("→ Connecté à l'équipement %d (", i);
+                if (reseau->equipements[i].type == STATION) {
+                    printf("Station ");
+                    afficher_mac(reseau->equipements[i].typequipement.station.mac);
+                } else {
+                    printf("Switch ");
+                    afficher_mac(reseau->equipements[i].typequipement.sw.mac);
+                }
+                printf(")\n");
+            }
+        }
+    } else {
+        printf("Switch ");
+        afficher_mac(src->typequipement.sw.mac);
+        printf("\n");
+    }
+
+    // Si c'est une station, trouver le switch connecté
+    if (src->type == STATION) {
+        int switch_trouve = 0;
+        for (int i = 0; i < reseau->nb_equipements; i++) {
+            if ((reseau->matrice_adjacence[src_id][i] == 1 || reseau->matrice_adjacence[src_id][i] == 0) && 
+                reseau->equipements[i].type == SWITCH) {
+                switch_trouve = 1;
+                printf("→ Station connectée au Switch ");
+                afficher_mac(reseau->equipements[i].typequipement.sw.mac);
+                printf(" (poids du lien : %d)\n", reseau->matrice_adjacence[src_id][i]);
+                
+                // Traiter la trame dans le switch
+                traiter_trame_switch(t, &reseau->equipements[i], pm, 0);
+                
+                // Propager la trame à partir du switch
+                propager_trame(t, &reseau->equipements[i], reseau, src_id, pm);
+                return;
+            }
+        }
+        if (!switch_trouve) {
+            printf("Erreur : station non connectée à un switch (vérifiez la matrice d'adjacence)\n");
+            return;
+        }
+    }
+
+    // Si c'est un switch, propager directement
+    propager_trame(t, src, reseau, src_id, pm);
+}
+
+void propager_trame(const trame *t, Equipement *sw, ReseauLocal *reseau, int src_id, PortManager *pm) {
+    int sw_id = -1;
+    // Trouver l'index du switch
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        if (memcmp(&reseau->equipements[i].typequipement.sw.mac, &sw->typequipement.sw.mac, sizeof(AdresseMAC)) == 0) {
+            sw_id = i;
+            break;
+        }
+    }
+
+    if (sw_id == -1) return;
+
+    // Chercher les connexions dans la matrice d'adjacence
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        if ((reseau->matrice_adjacence[sw_id][i] == 1 || reseau->matrice_adjacence[sw_id][i] == 0) && i != src_id) {
+            Equipement *dest = &reseau->equipements[i];
+            
+            // Si c'est la destination finale (station)
+            if (dest->type == STATION && 
+                memcmp(&dest->typequipement.station.mac, &t->dest_mac, sizeof(AdresseMAC)) == 0) {
+                printf("→ Switch ");
+                afficher_mac(sw->typequipement.sw.mac);
+                printf(" transmet à la Station destination ");
+                afficher_mac(dest->typequipement.station.mac);
+                printf(" (poids du lien : %d)\n", reseau->matrice_adjacence[sw_id][i]);
+                recevoir(t, dest);
+                return;
+            }
+            
+            // Si c'est un autre switch, continuer la propagation
+            if (dest->type == SWITCH) {
+                // Met à jour la table de commutation du switch traversé
+                traiter_trame_switch(t, dest, pm, 0); // 0 ou le bon port selon votre logique
+                printf("→ Switch ");
+                afficher_mac(sw->typequipement.sw.mac);
+                printf(" transmet au Switch ");
+                afficher_mac(dest->typequipement.sw.mac);
+                printf("\n");
+                propager_trame(t, dest, reseau, sw_id, pm);
+            }
         }
     }
 }
