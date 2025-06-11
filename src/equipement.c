@@ -31,18 +31,8 @@ void afficher_equipement(Equipement e) {
     }
 }
 
-void afficher_reseau(const ReseauLocal* reseau) {
-    printf("    Réseau local :\n");
-    printf("Nombre d'équipements : %d\n", reseau->nb_equipements);
-    printf("\n   Équipements    \n");
-
-    for (int i = 0; i < reseau->nb_equipements; i++) {
-        printf("[Équipement #%d]\n", i);
-        afficher_equipement(reseau->equipements[i]);
-        printf("\n");
-    }
-
-    printf("-- Matrice d’adjacence (coût des liens) --\n\n    ");
+void afficher_matrice_adjacence(const ReseauLocal* reseau) {
+    printf("-- Matrice d'adjacence (coût des liens) --\n\n    ");
     for (int i = 0; i < reseau->nb_equipements; i++) {
         printf("%4d", i);
     }
@@ -64,7 +54,16 @@ void afficher_reseau(const ReseauLocal* reseau) {
         printf("\n");
     }
     printf("\nLégende : . = pas de lien\n");
-    // Faire affichage table de commutations sous la forme
-    // Entrée 1 --> Sortie 0
-    // Entrée 0 --> Sortie 2
+}
+
+void afficher_reseau(const ReseauLocal* reseau) {
+    printf("    Réseau local :\n");
+    printf("Nombre d'équipements : %d\n", reseau->nb_equipements);
+    printf("\n   Équipements    \n");
+
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        printf("[Équipement #%d]\n", i);
+        afficher_equipement(reseau->equipements[i]);
+        printf("\n");
+    }
 }
