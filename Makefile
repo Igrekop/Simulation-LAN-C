@@ -3,10 +3,11 @@ CFLAGS = -Wall -Werror -Wextra -Iinclude
 SRC_DIR = src
 BIN_DIR = bin
 
-SRC = main.c \
+SRC = src/main.c \
       $(SRC_DIR)/equipement.c \
       $(SRC_DIR)/reseau.c \
-      $(SRC_DIR)/trame.c
+      $(SRC_DIR)/trame.c \
+      $(SRC_DIR)/port.c
 
 OBJ = $(patsubst %.c,$(BIN_DIR)/%.o,$(notdir $(SRC)))
 
