@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include "equipement.h"
 #include "reseau.h"
+#include "trame.h"
 #include <stdlib.h>
+#include <string.h>
+
 
 int main() {
 
@@ -55,6 +58,31 @@ int main() {
     // Affichage du réseau chargé
     afficher_reseau(&mon_reseau);
     
+        printf("\n Création et affichage d'une trame(test)\n");
+
+    trame t = {0}; // Initialisation à 0
+
+    // Remplissage des champs
+    uint8_t mac_src[6]  = {0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF};
+    uint8_t mac_dest[6] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66};
+    
+    memcpy(t.src_mac, mac_src, 6);
+    memcpy(t.dest_mac, mac_dest, 6);
+
+    t.ethertype = 0x0800; // IPv4
+
+    // Données exemple
+    const char *message = "Bonjour je suis Yvann et je pue";
+    size_t message_len = strlen(message);
+    memcpy(t.DATA.contenu.data, message, message_len);
+
+    // Appel de la fonction d'affichage
+    afficher_trame(&t);
+    
+    afficher_trame_complete(&t);
+
+    
     return EXIT_SUCCESS;
+    
 
 }
