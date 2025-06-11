@@ -11,19 +11,12 @@ void afficher_trame(const trame *t) {
     printf("║                TRAME ETHERNET            ║\n");
     printf("╠══════════════════════════════════════════╣\n");
     
-    // MAC
     printf("║ MAC Source      : ");
-    for (int i = 0; i < 6; i++) {
-        printf("%02X", t->src_mac[i]);
-        if (i < 5) printf(":");
-    }
+    afficher_mac(t->src_mac);
     printf("\n");
 
     printf("║ MAC Destination : ");
-    for (int i = 0; i < 6; i++) {
-        printf("%02X", t->dest_mac[i]);
-        if (i < 5) printf(":");
-    }
+    afficher_mac(t->dest_mac);
     printf("\n");
 
     // EtherType
@@ -75,6 +68,48 @@ void afficher_trame_complete(const trame *t) {
     printf("\n %zu octets de données\n", 
            data_size);
 }
+
+AdresseMAC recevoir(const trame *t, Equipement *e) {
+    printf("╔══════════════════════════════════════════╗\n");
+    printf("║               TRAME REÇUE                ║\n");
+    printf("╠══════════════════════════════════════════╣\n");
+
+    printf("║ Destination : ");
+    afficher_mac(t->dest_mac);
+    printf("\n║ Récepteur   : ");
+    if (e->type == STATION) {
+    afficher_mac(e->typequipement.station.mac);
+    printf("\n╠══════════════════════════════════════════╣\n");
+
+    
+    if (t->dest_mac == e->typequipement.station.mac) {
+        printf("║ ➤ Trame acceptée : l'équipement est le destinataire.\n");
+        printf("╚══════════════════════════════════════════╝\n");
+        return e->typequipement.station.mac;
+    } else {
+        printf("║ ➤ Trame ignorée : destinataire incorrect.\n");
+        printf("╚══════════════════════════════════════════╝\n");
+        return 0;  
+    }
+    } 
+    else {
+    afficher_mac(e->typequipement.sw.mac);
+
+    printf("\n╠══════════════════════════════════════════╣\n");
+
+    
+    if (t->dest_mac == e->typequipement.sw.mac) {
+        printf("║ ➤ Trame acceptée : l'équipement est le destinataire.\n");
+        printf("╚══════════════════════════════════════════╝\n");
+        return e->typequipement.sw.mac;
+    } else {
+        printf("║ ➤ Trame ignorée : destinataire incorrect.\n");
+        printf("╚══════════════════════════════════════════╝\n");
+        return 0;  
+    }
+    }
+}
+
 
        
        
