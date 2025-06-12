@@ -2,33 +2,33 @@
 #define TRAME_H
 
 #include <stdint.h>
-#include <stdio.h>
 #include "equipement.h"
 
-// Trame Ethernet simplifiée
+#define ETHERNET_MAX_DATA 1500
+
 typedef struct {
-    uint8_t preambule[7];
-    uint8_t SFD;
-    mac_addr_t src_mac;
-    mac_addr_t dest_mac;
+    uint8_t preambule[7];      // 7 octets = préambule
+    uint8_t sfd;               // 1 octet = start frame delimiter
+    mac_addr_t dest;           // 6 octets
+    mac_addr_t src;            // 6 octets
+    uint16_t type;             // 2 octets (ex: 0x0800 pour IPv4)
+    uint8_t data[ETHERNET_MAX_DATA]; // données utiles (0 à 1500 octets)
+    uint16_t data_len;         // longueur réelle des données
+    uint8_t bourrage[46];      // padding si data < 46 octets
+    uint32_t fcs;              // 4 octets (simplifié ici)
+} ethernet_frame_t;
 
-    uint16_t ethertype;
-    union {
-        uint8_t raw[1500];
-        struct {
-            uint8_t data[46];
-            uint8_t padding[1454];
-        } contenu;
-    } DATA;
-    uint32_t FCS;
-} trame;
+void creer_trame_ethernet(
+    ethernet_frame_t *trame,
+    mac_addr_t src,
+    mac_addr_t dest,
+    uint16_t type,
+    const uint8_t *data,
+    uint16_t data_len
+);
 
-// Fonctions d'affichage
-void afficher_trame(const trame *t);
-void afficher_trame_complete(const trame *t);
-mac_addr_t recevoir(const trame *t, equipement_t *e, int port_entree, reseau_t* reseau);
-
-// Nouvelle fonction pour l'envoi de trame
-void envoyer_trame(const trame *t, equipement_t *emetteur, mac_addr_t dest_mac, reseau_t* reseau);
+void afficher_trame_utilisateur(const ethernet_frame_t *trame);
+void afficher_trame_hex(const ethernet_frame_t *trame);
+void afficher_mac(mac_addr_t mac);
 
 #endif

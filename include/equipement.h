@@ -1,7 +1,6 @@
 #ifndef EQUIPEMENT_H
 #define EQUIPEMENT_H
 
-#include <stdio.h>
 #include <stdint.h>
 
 #define MAC_ADDR_LEN 6
@@ -10,7 +9,6 @@
 #define MAX_STATIONS 32
 #define MAX_SWITCHES 16
 
-// Types d'adresses
 typedef struct {
     uint8_t addr[MAC_ADDR_LEN];
 } mac_addr_t;
@@ -19,24 +17,21 @@ typedef struct {
     uint8_t addr[IP_ADDR_LEN];
 } ip_addr_t;
 
-// Station
 typedef struct {
     mac_addr_t mac;
     ip_addr_t ip;
 } station_t;
 
-// Switch
 typedef struct {
     mac_addr_t mac;
     int nb_ports;
-    int priorite;
+    int priority;
     mac_addr_t mac_table[MAX_PORTS];
     int port_table[MAX_PORTS]; // index du voisin
     int port_etat[MAX_PORTS];  // 1 = actif (spanning tree), 0 = bloqué
     int mac_table_size;
 } switch_t;
 
-// Type d'équipement
 typedef enum { STATION, SWITCH } equip_type_t;
 
 typedef struct {
@@ -47,14 +42,12 @@ typedef struct {
     } data;
 } equipement_t;
 
-// Lien entre équipements
 typedef struct {
     int equip1;
     int equip2;
     int poids;
 } lien_t;
 
-// Réseau
 typedef struct {
     int nb_equipements;
     equipement_t equipements[MAX_SWITCHES + MAX_STATIONS];
@@ -65,13 +58,5 @@ typedef struct {
 // Fonctions simples de comparaison
 int mac_egal(mac_addr_t m1, mac_addr_t m2);
 int ip_egal(ip_addr_t ip1, ip_addr_t ip2);
-int mac_vide(mac_addr_t mac);
-
-// Fonctions d'affichage
-void afficher_station(station_t s);
-void afficher_switch(switch_t sw);
-void afficher_equipement(equipement_t e);
-void afficher_reseau(const reseau_t* reseau);
-void afficher_matrice_adjacence(const reseau_t* reseau);
 
 #endif
