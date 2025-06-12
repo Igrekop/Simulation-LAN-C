@@ -26,6 +26,9 @@ typedef struct {
 // Fonctions d'affichage
 void afficher_trame(const trame *t);
 void afficher_trame_complete(const trame *t);
-AdresseMAC recevoir(const trame *t, Equipement *e);
+AdresseMAC recevoir(const trame *t, Equipement *e, int port_entree, ReseauLocal* reseau);
+
+// Nouvelle fonction pour l'envoi de trame
+void envoyer_trame(const trame *t, Equipement *emetteur, AdresseMAC dest_mac, ReseauLocal* reseau);
 
 #endif
