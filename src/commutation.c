@@ -31,6 +31,7 @@ int switch_rechercher_port(switch_t *sw, mac_addr_t mac_dest) {
     }
     return -1;
 }
+//testaaaa
 
 // Affiche la table MAC d'un switch
 void afficher_table_mac(switch_t *sw) {
