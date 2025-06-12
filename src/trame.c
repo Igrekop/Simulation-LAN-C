@@ -115,6 +115,7 @@ AdresseMAC recevoir(const trame *t, Equipement *e, int port_entree, ReseauLocal*
         
         if (t->dest_mac == e->typequipement.station.mac) {
             printf("║ ➤ Trame acceptée : l'équipement est le destinataire.\n");
+            printf("║ ➤ Message reçu : %s\n", (char*)t->DATA.contenu.data);
             printf("╚══════════════════════════════════════════╝\n");
             return e->typequipement.station.mac;
         } else {
@@ -128,10 +129,22 @@ AdresseMAC recevoir(const trame *t, Equipement *e, int port_entree, ReseauLocal*
 
         // 1. Apprentissage : mise à jour de la table de commutation
         if (port_entree >= 0 && port_entree < e->typequipement.sw.nb_ports) {
-            e->typequipement.sw.table_commutation[port_entree] = t->src_mac;
-            printf("║ ➤ Apprentissage : MAC source ");
-            afficher_mac(t->src_mac);
-            printf(" apprise sur le port %d\n", port_entree);
+            // Vérifier si cette adresse MAC est déjà apprise sur un autre port
+            int port_existant = -1;
+            for (int i = 0; i < e->typequipement.sw.nb_ports; i++) {
+                if (e->typequipement.sw.table_commutation[i] == t->src_mac) {
+                    port_existant = i;
+                    break;
+                }
+            }
+            
+            // Si l'adresse MAC n'est pas déjà apprise, on l'apprend sur le port d'entrée
+            if (port_existant == -1) {
+                e->typequipement.sw.table_commutation[port_entree] = t->src_mac;
+                printf("║ ➤ Apprentissage : MAC source ");
+                afficher_mac(t->src_mac);
+                printf(" apprise sur le port %d\n", port_entree);
+            }
         }
 
         // 2. Vérifier si c'est la destination finale
@@ -141,7 +154,7 @@ AdresseMAC recevoir(const trame *t, Equipement *e, int port_entree, ReseauLocal*
             return e->typequipement.sw.mac;
         }
 
-        // 3. Recherche de la MAC de destination dans la table
+        // 3. Chercher la destination dans la table de commutation
         int port_destination = -1;
         for (int i = 0; i < e->typequipement.sw.nb_ports; i++) {
             if (e->typequipement.sw.table_commutation[i] == t->dest_mac) {
@@ -150,30 +163,35 @@ AdresseMAC recevoir(const trame *t, Equipement *e, int port_entree, ReseauLocal*
             }
         }
 
-        // 4. Décision de transfert
         if (port_destination != -1) {
-            // Transfert unicast : la MAC est connue
-            printf("║ ➤ Transfert unicast : trame envoyée sur le port %d\n", port_destination);
+            // La destination est connue, transfert unicast
+            printf("║ ➤ Transfert unicast : MAC destination connue sur le port %d\n", port_destination);
             printf("╚══════════════════════════════════════════╝\n");
             
             // Trouver l'équipement connecté sur ce port
             for (int i = 0; i < reseau->nb_equipements; i++) {
-                int port = trouver_port_switch(reseau, port_entree, i);
-                if (port == port_destination) {
-                    return recevoir(t, &reseau->equipements[i], port, reseau);
+                if (reseau->matrice_adjacence[port_destination][i] > 0) {
+                    return recevoir(t, &reseau->equipements[i], port_destination, reseau);
                 }
             }
         } else {
-            // Diffusion : la MAC est inconnue
+            // La destination n'est pas connue, faire un broadcast
             printf("║ ➤ Diffusion : MAC destination inconnue\n");
             printf("╚══════════════════════════════════════════╝\n");
             
             // Diffuser sur tous les ports sauf celui d'entrée
+            printf("📢 Switch commence la diffusion sur les autres ports...\n");
             for (int port = 0; port < e->typequipement.sw.nb_ports; port++) {
                 if (port != port_entree) {
                     // Trouver l'équipement connecté sur ce port
                     for (int i = 0; i < reseau->nb_equipements; i++) {
                         if (reseau->matrice_adjacence[port][i] > 0) {
+                            // Ne pas envoyer à l'émetteur
+                            if (reseau->equipements[i].type == STATION && 
+                                reseau->equipements[i].typequipement.station.mac == t->src_mac) {
+                                continue;
+                            }
+                            
                             printf("📤 Broadcast sur le port %d vers l'équipement %d (%s)\n", 
                                    port, i, 
                                    reseau->equipements[i].type == STATION ? "Station" : "Switch");
@@ -186,7 +204,10 @@ AdresseMAC recevoir(const trame *t, Equipement *e, int port_entree, ReseauLocal*
                                 }
                             }
                             
-                            recevoir(t, &reseau->equipements[i], port, reseau);
+                            AdresseMAC resultat = recevoir(t, &reseau->equipements[i], port, reseau);
+                            if (resultat == t->dest_mac) {
+                                printf("✅ Trame reçue par la station destination\n");
+                            }
                         }
                     }
                 }
@@ -213,10 +234,17 @@ static int trouver_equipement_par_mac(ReseauLocal* reseau, AdresseMAC mac) {
 
 // Fonction pour trouver le port d'un switch connecté à un équipement
 static int trouver_port_switch(ReseauLocal* reseau, int index_switch, int index_equipement) {
-    Switch* sw = &reseau->equipements[index_switch].typequipement.sw;
-    for (int port = 0; port < sw->nb_ports; port++) {
-        if (reseau->matrice_adjacence[index_switch][index_equipement] == port) {
-            return port;
+    // Si l'équipement est connecté au switch dans la matrice d'adjacence
+    if (reseau->matrice_adjacence[index_equipement][index_switch] > 0) {
+        // On attribue le premier port disponible (0 à nb_ports-1)
+        // On commence par 0 et on incrémente pour chaque nouvelle connexion
+        int port = 0;
+        while (port < reseau->equipements[index_switch].typequipement.sw.nb_ports) {
+            // Si le port est libre (pas d'adresse MAC associée)
+            if (reseau->equipements[index_switch].typequipement.sw.table_commutation[port] == 0) {
+                return port;
+            }
+            port++;
         }
     }
     return -1;
@@ -247,14 +275,19 @@ static void ajouter_trame_vue(const trame *t, AdresseMAC switch_id) {
 }
 
 void envoyer_trame(const trame *t, Equipement *emetteur, AdresseMAC dest_mac, ReseauLocal* reseau) {
+    // Générer un nouveau FCS unique pour chaque trame
+    static uint32_t sequence_counter = 0;
+    trame t_copie = *t;  // Copie de la trame pour pouvoir modifier le FCS
+    t_copie.FCS = sequence_counter++;
+    
     // Vérifier si la trame a déjà été vue
-    if (trame_deja_vue(t, 0)) {  // 0 comme switch_id pour l'émetteur
+    if (trame_deja_vue(&t_copie, 0)) {  // 0 comme switch_id pour l'émetteur
         printf("⚠️ Trame déjà traitée, évitement de boucle\n");
         return;
     }
     
     // Ajouter la trame à la liste des trames vues
-    ajouter_trame_vue(t, 0);  // 0 comme switch_id pour l'émetteur
+    ajouter_trame_vue(&t_copie, 0);  // 0 comme switch_id pour l'émetteur
 
     printf("\n╔══════════════════════════════════════════╗\n");
     printf("║             ENVOI DE TRAME               ║\n");
@@ -286,7 +319,7 @@ void envoyer_trame(const trame *t, Equipement *emetteur, AdresseMAC dest_mac, Re
                 int port = trouver_port_switch(reseau, i, index_emetteur);
                 if (port >= 0) {
                     printf("📤 Station envoie la trame au switch sur le port %d\n", port);
-                    recevoir(t, &reseau->equipements[i], port, reseau);
+                    recevoir(&t_copie, &reseau->equipements[i], port, reseau);
                     return;
                 }
             }
@@ -319,13 +352,13 @@ void envoyer_trame(const trame *t, Equipement *emetteur, AdresseMAC dest_mac, Re
                     reseau->equipements[i].typequipement.station.mac == dest_mac) {
                     printf("✅ Trame arrivée à destination (station)\n");
                     // La station reçoit la trame
-                    recevoir(t, &reseau->equipements[i], port_destination, reseau);
+                    recevoir(&t_copie, &reseau->equipements[i], port_destination, reseau);
                     return;
                 }
                 // Si c'est un autre switch
                 else if (reseau->equipements[i].type == SWITCH) {
                     printf("📤 Trame transmise à un autre switch\n");
-                    recevoir(t, &reseau->equipements[i], port_destination, reseau);
+                    recevoir(&t_copie, &reseau->equipements[i], port_destination, reseau);
                     return;
                 }
             }
@@ -352,7 +385,7 @@ void envoyer_trame(const trame *t, Equipement *emetteur, AdresseMAC dest_mac, Re
             if (port >= 0 && !ports_utilises[port]) {
                 printf("📤 Diffusion sur le port %d\n", port);
                 ports_utilises[port] = 1;  // Marquer le port comme utilisé
-                recevoir(t, &reseau->equipements[i], port, reseau);
+                recevoir(&t_copie, &reseau->equipements[i], port, reseau);
             }
         }
     }
