@@ -5,8 +5,20 @@
 #include <stdint.h>
 #include "reseau.h"
 
-#define MAX_PORTS 16 // ou la valeur que tu utilises déjà
-#define MAX_EQUIPES 100
+#define MAC_ADDR_LEN 6
+#define IP_ADDR_LEN 4
+#define MAX_PORTS 64
+#define MAX_STATIONS 32
+#define MAX_SWITCHES 16
+
+// Types d'adresses
+typedef struct {
+    uint8_t addr[MAC_ADDR_LEN];
+} AdresseMAC;
+
+typedef struct {
+    uint8_t addr[IP_ADDR_LEN];
+} AdresseIP;
 
 // Station
 typedef struct {
@@ -19,36 +31,47 @@ typedef struct {
     AdresseMAC mac;
     int nb_ports;
     int priorite;
-    AdresseMAC table_commutation[MAX_PORTS];
-    int ports_physiques[MAX_PORTS]; // <-- AJOUTE CETTE LIGNE
+    AdresseMAC mac_table[MAX_PORTS];
+    int port_table[MAX_PORTS]; // index du voisin
+    int port_etat[MAX_PORTS];  // 1 = actif (spanning tree), 0 = bloqué
+    int mac_table_size;
 } Switch;
 
-
 // Type d'équipement
-typedef enum {
-    STATION = 1, 
-    SWITCH = 2
-} TypeEquipement;
+typedef enum { STATION, SWITCH } typequipement;
 
 typedef struct {
-    TypeEquipement type;
+    typequipement type;
     union {
         Station station;
         Switch sw;
-    } typequipement;
+    } data;
 } Equipement;
 
-typedef struct ReseauLocal {
-    Equipement equipements[MAX_EQUIPES];
+// Lien entre équipements
+typedef struct {
+    int equip1;
+    int equip2;
+    int poids;
+} Lien;
+
+// Réseau
+typedef struct {
     int nb_equipements;
-    int matrice_adjacence[MAX_EQUIPES][MAX_EQUIPES]; // Pour faire la table de commutations
-} ReseauLocal;
+    equipement_t equipements[MAX_SWITCHES + MAX_STATIONS];
+    int nb_liens;
+    lien_t liens[128];
+} reseau_t;
+
+// Fonctions simples de comparaison
+int mac_egal(AdresseMAC m1, AdresseMAC m2);
+int ip_egal(ip_addr_t ip1, ip_addr_t ip2);
 
 // Fonctions d'affichage
-void afficher_station(Station s);
-void afficher_switch(Switch sw);
-void afficher_equipement(Equipement e);
-void afficher_reseau(const ReseauLocal* reseau);
-void afficher_matrice_adjacence(const ReseauLocal* reseau);
+void afficher_station(station_t s);
+void afficher_switch(switch_t sw);
+void afficher_equipement(equipement_t e);
+void afficher_reseau(const reseau_t* reseau);
+void afficher_matrice_adjacence(const reseau_t* reseau);
 
 #endif
