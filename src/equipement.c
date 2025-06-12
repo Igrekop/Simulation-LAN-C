@@ -1,5 +1,13 @@
 #include <stdio.h>
+#include <string.h>
 #include "equipement.h"
+
+int mac_vide(mac_addr_t mac) {
+    for (int i = 0; i < MAC_ADDR_LEN; i++) {
+        if (mac.addr[i] != 0) return 0;
+    }
+    return 1;
+}
 
 void afficher_station(Station s) {
     printf("Station\n");
@@ -16,7 +24,7 @@ void afficher_switch(Switch sw) {
     // Affichage de la table de commutation
     int table_vide = 1;
     for (int i = 0; i < sw.nb_ports; i++) {
-        if (sw.table_commutation[i] != 0) {
+        if (!mac_vide(sw.mac_table[i])) {
             table_vide = 0;
             break;
         }
@@ -26,9 +34,9 @@ void afficher_switch(Switch sw) {
         printf("    Table vide (aucune entrée apprise)\n");
     } else {
         for (int i = 0; i < sw.nb_ports; i++) {
-            if (sw.table_commutation[i] != 0) {
+            if (!mac_vide(sw.mac_table[i])) {
                 printf("    Port %d → ", i);
-                afficher_mac(sw.table_commutation[i]);
+                afficher_mac(sw.mac_table[i]);
                 printf("\n");
             }
         }
@@ -36,21 +44,21 @@ void afficher_switch(Switch sw) {
     // Affichage des connexions physiques
     printf("  Connexions physiques :\n");
     for (int p = 0; p < sw.nb_ports; p++) {
-        if (sw.ports_physiques[p] != -1) {
-            printf("    Port %d → Equipement #%d\n", p, sw.ports_physiques[p]);
+        if (sw.port_table[p] != -1) {
+            printf("    Port %d → Equipement #%d\n", p, sw.port_table[p]);
         }
     }
 }
 
 void afficher_equipement(Equipement e) {
     if (e.type == STATION) {
-        afficher_station(e.typequipement.station);
+        afficher_station(e.data.station);
     } else if (e.type == SWITCH) {
-        afficher_switch(e.typequipement.sw);
+        afficher_switch(e.data.sw);
     }
 }
 
-void afficher_matrice_adjacence(const ReseauLocal* reseau) {
+void afficher_matrice_adjacence(const Reseau* reseau) {
     printf("-- Matrice d'adjacence (coût des liens) --\n\n    ");
     for (int i = 0; i < reseau->nb_equipements; i++) {
         printf("%4d", i);
@@ -64,7 +72,7 @@ void afficher_matrice_adjacence(const ReseauLocal* reseau) {
     for (int i = 0; i < reseau->nb_equipements; i++) {
         printf("%3d|", i);
         for (int j = 0; j < reseau->nb_equipements; j++) {
-            int poids = reseau->matrice_adjacence[i][j];
+            int poids = reseau->liens[i][j];
             if (poids == -1)
                 printf("   .");
             else
@@ -75,7 +83,7 @@ void afficher_matrice_adjacence(const ReseauLocal* reseau) {
     printf("\nLégende : . = pas de lien\n");
 }
 
-void afficher_reseau(const ReseauLocal* reseau) {
+void afficher_reseau(const Reseau* reseau) {
     printf("    Réseau local :\n");
     printf("Nombre d'équipements : %d\n", reseau->nb_equipements);
     printf("\n   Équipements    \n");

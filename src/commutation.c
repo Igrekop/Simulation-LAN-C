@@ -2,7 +2,7 @@
 #include <stdio.h>
 
 // Ajoute une MAC à la table si pas déjà là, ou met à jour le port si besoin
-int switch_apprendre_mac(switch_t *sw, mac_addr_t mac_src, int port) {
+int switch_apprendre_mac(Switch *sw, mac_addr_t mac_src, int port) {
     int i;
     for (i = 0; i < sw->mac_table_size; i++) {
         if (mac_egal(sw->mac_table[i], mac_src)) {
@@ -22,7 +22,7 @@ int switch_apprendre_mac(switch_t *sw, mac_addr_t mac_src, int port) {
 }
 
 // Cherche le port associé à une MAC, -1 si inconnu
-int switch_rechercher_port(switch_t *sw, mac_addr_t mac_dest) {
+int switch_rechercher_port(Switch *sw, mac_addr_t mac_dest) {
     int i;
     for (i = 0; i < sw->mac_table_size; i++) {
         if (mac_egal(sw->mac_table[i], mac_dest)) {
@@ -31,10 +31,9 @@ int switch_rechercher_port(switch_t *sw, mac_addr_t mac_dest) {
     }
     return -1;
 }
-//testaaaa
 
 // Affiche la table MAC d'un switch
-void afficher_table_mac(switch_t *sw) {
+void afficher_table_mac(Switch *sw) {
     int i, j;
     printf("Table MAC du switch :\n");
     for (i = 0; i < sw->mac_table_size; i++) {
