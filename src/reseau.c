@@ -2,8 +2,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
-#include "reseau.h"
-#include "equipement.h"
+#include "../include/reseau.h"
+#include "../include/equipement.h"
 
 void afficher_mac(AdresseMAC mac) {
     for (int i = 5; i >= 0; i--) {
