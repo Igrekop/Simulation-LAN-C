@@ -80,6 +80,7 @@ int charger_reseau_fichier(const char* nom_fichier, ReseauLocal* reseau) {
                 reseau->equipements[i].typequipement.sw.table_commutation[j] = 0;
                 // table de commutation pas encore faites
             }
+            
 
         } else if (reseau->equipements[i].type == STATION) {
             sscanf(line_buffer + 2, "%17[^;];%15s", mac_str, ip_str);
@@ -100,6 +101,48 @@ int charger_reseau_fichier(const char* nom_fichier, ReseauLocal* reseau) {
         // idem
     }
 
+    // Parcours des liens et mise à jour des ports physiques
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        if (reseau->equipements[i].type != SWITCH) continue;
+        Switch* sw = &reseau->equipements[i].typequipement.sw;
+
+        int port = 0;
+        for (int j = 0; j < reseau->nb_equipements; j++) {
+            if (reseau->matrice_adjacence[i][j] >= 0) {
+                if (port < sw->nb_ports) {
+                    sw->ports_physiques[port++] = j; // j = index équipement connecté
+                }
+            }
+        }
+
+        // Initialise les ports restants
+        for (; port < MAX_PORTS; port++) {
+            sw->ports_physiques[port] = -1;
+        }
+    }
+
     fclose(fichier);
     return 0;
+}
+
+void afficher_table_commutation(Switch* sw) {
+    printf("Table de commutation pour le switch (MAC → Port):\n");
+    int table_vide = 1;
+    for (int i = 0; i < sw->nb_ports; i++) {
+        if (sw->table_commutation[i] != 0) {
+            table_vide = 0;
+            break;
+        }
+    }
+    if (table_vide) {
+        printf("  Table vide (aucune entrée apprise)\n");
+    } else {
+        for (int i = 0; i < sw->nb_ports; i++) {
+            if (sw->table_commutation[i] != 0) {
+                printf("  Port %d → MAC: ", i);
+                afficher_mac(sw->table_commutation[i]);
+                printf("\n");
+            }
+        }
+    }
 }

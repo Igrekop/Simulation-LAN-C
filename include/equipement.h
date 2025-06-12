@@ -5,7 +5,7 @@
 #include <stdint.h>
 #include "reseau.h"
 
-#define MAX_PORTS 32
+#define MAX_PORTS 16 // ou la valeur que tu utilises déjà
 #define MAX_EQUIPES 100
 
 // Station
@@ -20,7 +20,9 @@ typedef struct {
     int nb_ports;
     int priorite;
     AdresseMAC table_commutation[MAX_PORTS];
+    int ports_physiques[MAX_PORTS]; // <-- AJOUTE CETTE LIGNE
 } Switch;
+
 
 // Type d'équipement
 typedef enum {
