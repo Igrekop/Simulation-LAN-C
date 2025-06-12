@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <stdint.h>
-#include "reseau.h"
 
 #define MAC_ADDR_LEN 6
 #define IP_ADDR_LEN 4
@@ -14,46 +13,46 @@
 // Types d'adresses
 typedef struct {
     uint8_t addr[MAC_ADDR_LEN];
-} AdresseMAC;
+} mac_addr_t;
 
 typedef struct {
     uint8_t addr[IP_ADDR_LEN];
-} AdresseIP;
+} ip_addr_t;
 
 // Station
 typedef struct {
-    AdresseMAC mac;
-    AdresseIP ip;
-} Station;
+    mac_addr_t mac;
+    ip_addr_t ip;
+} station_t;
 
 // Switch
 typedef struct {
-    AdresseMAC mac;
+    mac_addr_t mac;
     int nb_ports;
     int priorite;
-    AdresseMAC mac_table[MAX_PORTS];
+    mac_addr_t mac_table[MAX_PORTS];
     int port_table[MAX_PORTS]; // index du voisin
     int port_etat[MAX_PORTS];  // 1 = actif (spanning tree), 0 = bloqué
     int mac_table_size;
-} Switch;
+} switch_t;
 
 // Type d'équipement
-typedef enum { STATION, SWITCH } typequipement;
+typedef enum { STATION, SWITCH } equip_type_t;
 
 typedef struct {
-    typequipement type;
+    equip_type_t type;
     union {
-        Station station;
-        Switch sw;
+        station_t station;
+        switch_t sw;
     } data;
-} Equipement;
+} equipement_t;
 
 // Lien entre équipements
 typedef struct {
     int equip1;
     int equip2;
     int poids;
-} Lien;
+} lien_t;
 
 // Réseau
 typedef struct {
@@ -64,8 +63,9 @@ typedef struct {
 } reseau_t;
 
 // Fonctions simples de comparaison
-int mac_egal(AdresseMAC m1, AdresseMAC m2);
+int mac_egal(mac_addr_t m1, mac_addr_t m2);
 int ip_egal(ip_addr_t ip1, ip_addr_t ip2);
+int mac_vide(mac_addr_t mac);
 
 // Fonctions d'affichage
 void afficher_station(station_t s);

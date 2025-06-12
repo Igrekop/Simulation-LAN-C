@@ -3,14 +3,14 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "reseau.h"
+#include "equipement.h"
 
 // Trame Ethernet simplifiée
 typedef struct {
     uint8_t preambule[7];
     uint8_t SFD;
-    AdresseMAC src_mac;
-    AdresseMAC dest_mac;
+    mac_addr_t src_mac;
+    mac_addr_t dest_mac;
 
     uint16_t ethertype;
     union {
@@ -26,9 +26,9 @@ typedef struct {
 // Fonctions d'affichage
 void afficher_trame(const trame *t);
 void afficher_trame_complete(const trame *t);
-AdresseMAC recevoir(const trame *t, Equipement *e, int port_entree, ReseauLocal* reseau);
+mac_addr_t recevoir(const trame *t, equipement_t *e, int port_entree, reseau_t* reseau);
 
 // Nouvelle fonction pour l'envoi de trame
-void envoyer_trame(const trame *t, Equipement *emetteur, AdresseMAC dest_mac, ReseauLocal* reseau);
+void envoyer_trame(const trame *t, equipement_t *emetteur, mac_addr_t dest_mac, reseau_t* reseau);
 
 #endif
