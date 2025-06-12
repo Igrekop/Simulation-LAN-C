@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <string.h>   // Pour strlen, sscanf
 #include <stdlib.h>   // Pour exit, ou strtol si besoin
-#include "reseau.h"
-#include "equipement.h"
-#include "trame.h"
+#include "../include/reseau.h"
+#include "../include/equipement.h"
+#include "../include/trame.h"
 
 // Déclaration anticipée de propager_trame
 static void propager_trame(const trame *t, Equipement *sw, ReseauLocal *reseau, int src_id, PortManager *pm);

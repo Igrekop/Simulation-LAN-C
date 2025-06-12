@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "equipement.h"
+#include "../include/equipement.h"
 
 void afficher_station(Station s) {
     printf("Station\n");
