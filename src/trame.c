@@ -23,6 +23,7 @@ static int nb_trames_vues = 0;
 static int trouver_port_switch(ReseauLocal* reseau, int index_switch, int index_equipement);
 static int trame_deja_vue(const trame *t, AdresseMAC switch_id);
 static void ajouter_trame_vue(const trame *t, AdresseMAC switch_id);
+static int trouver_equipement_par_mac(ReseauLocal* reseau, AdresseMAC mac);
     
 void afficher_trame(const trame *t) {
     printf("╔══════════════════════════════════════════╗\n");
@@ -95,11 +96,6 @@ AdresseMAC recevoir(const trame *t, Equipement *e, int port_entree, ReseauLocal*
         printf(")\n");
         return 0;
     }
-    
-    // Ajouter la trame à la liste des trames vues pour ce switch
-    if (e->type == SWITCH) {
-        ajouter_trame_vue(t, e->typequipement.sw.mac);
-    }
 
     printf("╔══════════════════════════════════════════╗\n");
     printf("║               TRAME REÇUE                ║\n");
@@ -167,10 +163,11 @@ AdresseMAC recevoir(const trame *t, Equipement *e, int port_entree, ReseauLocal*
             // La destination est connue, transfert unicast
             printf("║ ➤ Transfert unicast : MAC destination connue sur le port %d\n", port_destination);
             printf("╚══════════════════════════════════════════╝\n");
-            
-            // Trouver l'équipement connecté sur ce port
+            // NE PAS ajouter la trame vue ici !
             for (int i = 0; i < reseau->nb_equipements; i++) {
-                if (reseau->matrice_adjacence[port_destination][i] > 0) {
+                if (reseau->matrice_adjacence[port_destination][i] >= 0) {
+                    // Ne pas rappeler le switch lui-même
+                    if (&reseau->equipements[i] == e) continue;
                     return recevoir(t, &reseau->equipements[i], port_destination, reseau);
                 }
             }
@@ -178,40 +175,36 @@ AdresseMAC recevoir(const trame *t, Equipement *e, int port_entree, ReseauLocal*
             // La destination n'est pas connue, faire un broadcast
             printf("║ ➤ Diffusion : MAC destination inconnue\n");
             printf("╚══════════════════════════════════════════╝\n");
-            
-            // Diffuser sur tous les ports sauf celui d'entrée
             printf("📢 Switch commence la diffusion sur les autres ports...\n");
-            for (int port = 0; port < e->typequipement.sw.nb_ports; port++) {
-                if (port != port_entree) {
-                    // Trouver l'équipement connecté sur ce port
-                    for (int i = 0; i < reseau->nb_equipements; i++) {
-                        if (reseau->matrice_adjacence[port][i] > 0) {
-                            // Ne pas envoyer à l'émetteur
-                            if (reseau->equipements[i].type == STATION && 
-                                reseau->equipements[i].typequipement.station.mac == t->src_mac) {
-                                continue;
-                            }
-                            
-                            printf("📤 Broadcast sur le port %d vers l'équipement %d (%s)\n", 
-                                   port, i, 
-                                   reseau->equipements[i].type == STATION ? "Station" : "Switch");
-                            
-                            // Pour les switches, vérifier si on a déjà reçu la trame
-                            if (reseau->equipements[i].type == SWITCH) {
-                                if (trame_deja_vue(t, reseau->equipements[i].typequipement.sw.mac)) {
-                                    printf("⚠️ Switch a déjà vu la trame, port %d ignoré\n", port);
-                                    continue;
-                                }
-                            }
-                            
-                            AdresseMAC resultat = recevoir(t, &reseau->equipements[i], port, reseau);
-                            if (resultat == t->dest_mac) {
-                                printf("✅ Trame reçue par la station destination\n");
-                            }
-                        }
-                    }
+
+            // AJOUTER la trame vue ici, pour éviter les boucles de broadcast
+            if (e->type == SWITCH) {
+                ajouter_trame_vue(t, e->typequipement.sw.mac);
+            }
+
+            Switch* sw = &e->typequipement.sw;
+            int index_self = trouver_equipement_par_mac(reseau, sw->mac);
+
+            for (int port = 0; port < sw->nb_ports; port++) {
+                if (port == port_entree) continue;
+
+                int cible = sw->ports_physiques[port];
+                if (cible == -1 || cible == index_self) continue; // pas connecté ou lui-même
+
+                if (reseau->equipements[cible].type == SWITCH &&
+                    trame_deja_vue(t, reseau->equipements[cible].typequipement.sw.mac)) {
+                    printf("⚠️ Switch a déjà vu la trame, port %d ignoré\n", port);
+                    continue; // évite rebouclage
+                }
+
+                printf("📤 Broadcast sur port %d vers équipement %d (%s)\n", port, cible,
+                       reseau->equipements[cible].type == STATION ? "Station" : "Switch");
+                AdresseMAC resultat = recevoir(t, &reseau->equipements[cible], port, reseau);
+                if (resultat == t->dest_mac) {
+                    printf("✅ Trame reçue par la station destination\n");
                 }
             }
+            return e->typequipement.sw.mac;
         }
         return e->typequipement.sw.mac;
     }
@@ -235,7 +228,7 @@ static int trouver_equipement_par_mac(ReseauLocal* reseau, AdresseMAC mac) {
 // Fonction pour trouver le port d'un switch connecté à un équipement
 static int trouver_port_switch(ReseauLocal* reseau, int index_switch, int index_equipement) {
     // Si l'équipement est connecté au switch dans la matrice d'adjacence
-    if (reseau->matrice_adjacence[index_equipement][index_switch] > 0) {
+    if (reseau->matrice_adjacence[index_equipement][index_switch] >= 0) {
         // On attribue le premier port disponible (0 à nb_ports-1)
         // On commence par 0 et on incrémente pour chaque nouvelle connexion
         int port = 0;
@@ -274,11 +267,16 @@ static void ajouter_trame_vue(const trame *t, AdresseMAC switch_id) {
     }
 }
 
+// Réinitialise la liste des trames vues
+
 void envoyer_trame(const trame *t, Equipement *emetteur, AdresseMAC dest_mac, ReseauLocal* reseau) {
     // Générer un nouveau FCS unique pour chaque trame
     static uint32_t sequence_counter = 0;
     trame t_copie = *t;  // Copie de la trame pour pouvoir modifier le FCS
     t_copie.FCS = sequence_counter++;
+
+    // Initialiser le compteur de trames vues
+    nb_trames_vues = 0;
     
     // Vérifier si la trame a déjà été vue
     if (trame_deja_vue(&t_copie, 0)) {  // 0 comme switch_id pour l'émetteur

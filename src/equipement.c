@@ -12,14 +12,33 @@ void afficher_switch(Switch sw) {
     printf("  MAC      : "); afficher_mac(sw.mac); printf("\n");
     printf("  Ports    : %d\n", sw.nb_ports);
     printf("  Priorité : %d\n", sw.priorite);
-    printf("  Table de commutation : (encore à faire)\n");
+
+    // Affichage de la table de commutation
+    int table_vide = 1;
     for (int i = 0; i < sw.nb_ports; i++) {
-        if (sw.table_commutation[i] != 0) { // 0 = port vide
-            printf("    Port %d → ", i);
-            afficher_mac(sw.table_commutation[i]);
-            printf("\n");
+        if (sw.table_commutation[i] != 0) {
+            table_vide = 0;
+            break;
         }
-        // faire affichage table
+    }
+    printf("  Table de commutation :\n");
+    if (table_vide) {
+        printf("    Table vide (aucune entrée apprise)\n");
+    } else {
+        for (int i = 0; i < sw.nb_ports; i++) {
+            if (sw.table_commutation[i] != 0) {
+                printf("    Port %d → ", i);
+                afficher_mac(sw.table_commutation[i]);
+                printf("\n");
+            }
+        }
+    }
+    // Affichage des connexions physiques
+    printf("  Connexions physiques :\n");
+    for (int p = 0; p < sw.nb_ports; p++) {
+        if (sw.ports_physiques[p] != -1) {
+            printf("    Port %d → Equipement #%d\n", p, sw.ports_physiques[p]);
+        }
     }
 }
 
