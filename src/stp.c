@@ -147,13 +147,20 @@ void stp_calculer_spanning_tree(reseau_t *reseau) {
 // Affiche l'état des ports pour chaque switch
 void stp_afficher_etat_ports(reseau_t *reseau) {
     int i, j;
-    printf("\n=== État des ports (1 = actif, 0 = bloqué) ===\n");
+    printf("\n\033[1;36m=== État des ports STP ===\033[0m\n");
     for (i = 0; i < reseau->nb_equipements; i++) {
         if (reseau->equipements[i].type == SWITCH) {
-            printf("Switch %d :\n", i);
+            printf("\n\033[1;35mSwitch %d\033[0m\n", i);
+            printf("\033[1;33m  Port  |  Voisin  | État\033[0m\n");
+            printf("\033[1;33m  ----- | -------- | -----\033[0m\n");
+            
             switch_t *sw = &reseau->equipements[i].data.sw;
             for (j = 0; j < sw->nb_ports; j++) {
-                printf("  Port vers %d : %d\n", sw->port_table[j], sw->port_etat[j]);
+                printf("  %-5d | %-8d | %s\n", 
+                    j,
+                    sw->port_table[j],
+                    sw->port_etat[j] ? "\033[1;32mActif\033[0m" : "\033[1;31mBloqué\033[0m"
+                );
             }
         }
     }
