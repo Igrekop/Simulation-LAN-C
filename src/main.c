@@ -82,7 +82,6 @@ int propager_trame(
 void simuler_trame_station(reseau_t *reseau, int idx_src, int idx_dest) {
     printf("\n--- Simulation d'une trame de la station %d vers la station %d ---\n", idx_src, idx_dest);
 
-    // Basic validation for station type
     if (reseau->equipements[idx_src].type != STATION || reseau->equipements[idx_dest].type != STATION) {
         printf("Erreur: L'indice source ou destination ne correspond pas à une station.\n");
         return;
@@ -125,25 +124,25 @@ void afficher_menu_principal() {
 // --- Main Function ---
 
 int main(int argc, char *argv[]) {
-    if (argc != 2) {
+    if (argc < 2) {
         printf("Usage: %s <fichier_config>\n", argv[0]);
-        return 1;
+        return EXIT_FAILURE;
     }
 
     reseau_t reseau;
-    init_reseau(&reseau);
+    reseau.nb_equipements = 0;
+    reseau.nb_liens = 0;
 
-    if (charger_reseau_fichier(argv[1], &reseau) != 0) {
-        printf("Erreur lors du chargement du réseau\n");
-        return 1;
+    printf("Chargement du réseau depuis le fichier '%s'...\n", argv[1]);
+    if (charger_reseau(argv[1], &reseau) != 0) {
+        printf("Erreur lors du chargement du fichier réseau.\n");
+        return EXIT_FAILURE;
     }
+    printf("Réseau chargé avec succès !\n");
 
-    // Calculation and display of STP are done once at startup as in your original main
     printf("\n--- Calcul du Spanning Tree Protocol (STP) ---\n");
-    // stp_calculer_spanning_tree expects a pointer, so use &reseau
     stp_calculer_spanning_tree(&reseau);
     printf("\n--- État initial des ports après STP ---\n");
-    // stp_afficher_etat_ports expects a pointer, so use &reseau
     stp_afficher_etat_ports(&reseau);
 
     int choix_menu_principal = -1;
@@ -152,12 +151,11 @@ int main(int argc, char *argv[]) {
         afficher_menu_principal();
         if (scanf("%d", &choix_menu_principal) != 1) {
             fprintf(stderr, "Entrée invalide. Veuillez entrer un nombre.\n");
-            choix_menu_principal = -1; // Reset to loop again
-            // Clear input buffer
+            choix_menu_principal = -1;
             while (getchar() != '\n');
             continue;
         }
-        getchar(); // Consume the newline character
+        getchar();
 
         switch (choix_menu_principal) {
             case 1: { // Lancer une simulation de trame (choix des stations)
@@ -178,7 +176,7 @@ int main(int argc, char *argv[]) {
                     while (getchar() != '\n');
                     break;
                 }
-                getchar(); // Consume newline
+                getchar();
 
                 printf("Entrez l'index de la station destination : ");
                 if (scanf("%d", &idx_dest) != 1) {
@@ -186,9 +184,8 @@ int main(int argc, char *argv[]) {
                     while (getchar() != '\n');
                     break;
                 }
-                getchar(); // Consume newline
+                getchar();
 
-                // Validate inputs for existing stations
                 if (idx_src < 0 || idx_src >= reseau.nb_equipements || reseau.equipements[idx_src].type != STATION) { // Access with '.'
                     printf("Erreur: L'index source %d n'est pas valide ou ne correspond pas à une station.\n", idx_src);
                 } else if (idx_dest < 0 || idx_dest >= reseau.nb_equipements || reseau.equipements[idx_dest].type != STATION) { // Access with '.'
@@ -208,7 +205,7 @@ int main(int argc, char *argv[]) {
             }
             case 2: // Afficher l'état des ports STP
                 printf("\n=== État des ports STP ===\n");
-                stp_afficher_etat_ports(&reseau); // stp_afficher_etat_ports expects a pointer
+                stp_afficher_etat_ports(&reseau);
                 break;
             case 3: // Afficher les tables MAC de tous les switches
                 printf("\n=== TABLES MAC DE TOUS LES SWITCHES ===\n");

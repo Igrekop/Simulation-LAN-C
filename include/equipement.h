@@ -8,7 +8,6 @@
 #define MAX_PORTS 64
 #define MAX_STATIONS 32
 #define MAX_SWITCHES 16
-#define MAX_LIENS 128
 
 typedef struct {
     uint8_t addr[MAC_ADDR_LEN];
