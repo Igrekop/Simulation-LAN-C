@@ -95,6 +95,56 @@ int propager_trame(
     return 0;
 }
 
+// Affiche la matrice d'adjacence du réseau avec les poids des liaisons et les non-connexions
+void afficher_matrice_adjacence(reseau_t *reseau) {
+    printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
+    printf("\033[1;36m║\033[0m \033[1;33m📊 Matrice d'adjacence du réseau\033[0m%*s\033[1;36m║\033[0m\n", 35, "");
+    printf("\033[1;36m╟────────────────────────────────────────────────────────────────╢\033[0m\n");
+    
+    // En-tête avec les numéros des équipements
+    printf("\033[1;36m║\033[0m     ");
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        printf("%2d ", i);
+    }
+    printf("%*s\033[1;36m║\033[0m\n", 40 - (reseau->nb_equipements * 3), "");
+    
+    // Ligne de séparation
+    printf("\033[1;36m║\033[0m   ─");
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        printf("───");
+    }
+    printf("%*s\033[1;36m║\033[0m\n", 40 - (reseau->nb_equipements * 3), "");
+    
+    // Contenu de la matrice
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        printf("\033[1;36m║\033[0m %2d │", i);
+        for (int j = 0; j < reseau->nb_equipements; j++) {
+            int poids = -1;
+            for (int k = 0; k < reseau->nb_liens; k++) {
+                if ((reseau->liens[k].equip1 == i && reseau->liens[k].equip2 == j) ||
+                    (reseau->liens[k].equip1 == j && reseau->liens[k].equip2 == i)) {
+                    poids = reseau->liens[k].poids;
+                    break;
+                }
+            }
+            if (poids == -1) {
+                printf(" \033[1;31m.\033[0m ");
+            } else {
+                printf(" \033[1;32m%d\033[0m ", poids);
+            }
+        }
+        printf("%*s\033[1;36m║\033[0m\n", 40 - (reseau->nb_equipements * 3), "");
+    }
+    
+    printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
+    
+    // Légende
+    printf("\n\033[1;33mLégende :\033[0m\n");
+    printf("  \033[1;32m[chiffre]\033[0m : Poids de la liaison entre les équipements\n");
+    printf("  \033[1;31m.\033[0m : Équipements non connectés\n");
+}
+
+// Décode et affiche les données reçues dans une trame sous différents formats (hex, ASCII, décimal)
 void decoder_donnees(const uint8_t *data, uint16_t data_len) {
     printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
     printf("\033[1;36m║\033[0m \033[1;33m📦 Décodage des données reçues\033[0m%*s\033[1;36m║\033[0m\n", 35, "");
@@ -128,7 +178,7 @@ void decoder_donnees(const uint8_t *data, uint16_t data_len) {
     printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
 }
 
-// Simulation d'une trame entre deux stations
+// Simule l'envoi d'une trame entre deux stations avec des données saisies par l'utilisateur
 void simuler_trame_station(reseau_t *reseau, int idx_src, int idx_dest) {
     printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
     printf("\033[1;36m║\033[0m \033[1;33m🚀 Démarrage de la simulation\033[0m%*s\033[1;36m║\033[0m\n", 35, "");
@@ -192,6 +242,26 @@ void simuler_trame_station(reseau_t *reseau, int idx_src, int idx_dest) {
     }
 }
 
+// Affiche les informations détaillées d'un équipement (station ou switch)
+void afficher_equipement(const equipement_t *equip) {
+    // ... existing code ...
+}
+
+// Affiche la topologie complète du réseau avec tous les équipements et leurs connexions
+void afficher_reseau(const reseau_t *reseau) {
+    // ... existing code ...
+}
+
+// Affiche l'état des ports STP pour chaque switch du réseau
+void afficher_ports_stp(const reseau_t *reseau) {
+    // ... existing code ...
+}
+
+// Affiche les tables MAC de chaque switch avec leurs entrées apprises
+void afficher_tables_mac(const reseau_t *reseau) {
+    // ... existing code ...
+}
+
 // --- Menu Display Function ---
 
 void afficher_menu_principal() {
@@ -234,91 +304,35 @@ void afficher_stations_disponibles(reseau_t *reseau) {
     printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
 }
 
-void afficher_matrice_adjacence(reseau_t *reseau) {
-    printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
-    printf("\033[1;36m║\033[0m \033[1;33m📊 Matrice d'adjacence du réseau\033[0m%*s\033[1;36m║\033[0m\n", 35, "");
-    printf("\033[1;36m╟────────────────────────────────────────────────────────────────╢\033[0m\n");
-    
-    // En-tête avec les numéros des équipements
-    printf("\033[1;36m║\033[0m     ");
-    for (int i = 0; i < reseau->nb_equipements; i++) {
-        printf("%2d ", i);
-    }
-    printf("%*s\033[1;36m║\033[0m\n", 40 - (reseau->nb_equipements * 3), "");
-    
-    // Ligne de séparation
-    printf("\033[1;36m║\033[0m   ─");
-    for (int i = 0; i < reseau->nb_equipements; i++) {
-        printf("───");
-    }
-    printf("%*s\033[1;36m║\033[0m\n", 40 - (reseau->nb_equipements * 3), "");
-    
-    // Contenu de la matrice
-    for (int i = 0; i < reseau->nb_equipements; i++) {
-        printf("\033[1;36m║\033[0m %2d │", i);
-        for (int j = 0; j < reseau->nb_equipements; j++) {
-            int poids = -1;
-            for (int k = 0; k < reseau->nb_liens; k++) {
-                if ((reseau->liens[k].equip1 == i && reseau->liens[k].equip2 == j) ||
-                    (reseau->liens[k].equip1 == j && reseau->liens[k].equip2 == i)) {
-                    poids = reseau->liens[k].poids;
-                    break;
-                }
-            }
-            if (poids == -1) {
-                printf(" \033[1;31m.\033[0m ");
-            } else {
-                printf(" \033[1;32m%d\033[0m ", poids);
-            }
-        }
-        printf("%*s\033[1;36m║\033[0m\n", 40 - (reseau->nb_equipements * 3), "");
-    }
-    
-    printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
-    
-    // Légende
-    printf("\n\033[1;33mLégende :\033[0m\n");
-    printf("  \033[1;32m[chiffre]\033[0m : Poids de la liaison entre les équipements\n");
-    printf("  \033[1;31m.\033[0m : Équipements non connectés\n");
-}
-
 // --- Main Function ---
 
 int main(int argc, char *argv[]) {
-    if (argc < 2) {
-        printf("\033[1;31mUsage: %s <fichier_config>\033[0m\n", argv[0]);
-        return EXIT_FAILURE;
+    // Vérifie que le fichier de configuration est fourni en argument
+    if (argc != 2) {
+        printf("Usage: %s <fichier_config>\n", argv[0]);
+        return 1;
     }
 
+    // Initialise et charge le réseau depuis le fichier de configuration
     reseau_t reseau;
-    reseau.nb_equipements = 0;
-    reseau.nb_liens = 0;
-
-    printf("\033[1;36mChargement du réseau depuis le fichier '%s'...\033[0m\n", argv[1]);
     if (charger_reseau(argv[1], &reseau) != 0) {
-        printf("\033[1;31mErreur lors du chargement du fichier réseau.\033[0m\n");
-        return EXIT_FAILURE;
+        printf("Erreur lors du chargement du réseau.\n");
+        return 1;
     }
-    printf("\033[1;32mRéseau chargé avec succès !\033[0m\n");
 
-    printf("\n\033[1;36m=== Calcul du Spanning Tree Protocol (STP) ===\033[0m\n");
-    stp_calculer_spanning_tree(&reseau);
-    printf("\n\033[1;36m=== État initial des ports après STP ===\033[0m\n");
-    stp_afficher_etat_ports(&reseau);
-
-    int choix_menu_principal = -1;
-
-    while (choix_menu_principal != 0) {
+    // Boucle principale du menu
+    int choix;
+    do {
         afficher_menu_principal();
-        if (scanf("%d", &choix_menu_principal) != 1) {
+        if (scanf("%d", &choix) != 1) {
             fprintf(stderr, "\033[1;31mEntrée invalide. Veuillez entrer un nombre.\033[0m\n");
-            choix_menu_principal = -1;
+            choix = -1;
             while (getchar() != '\n');
             continue;
         }
         getchar();
 
-        switch (choix_menu_principal) {
+        switch (choix) {
             case 1: { // Lancer une simulation de trame (choix des stations)
                 int idx_src, idx_dest;
 
@@ -400,6 +414,7 @@ int main(int argc, char *argv[]) {
                 printf("\033[1;31mChoix invalide. Veuillez réessayer.\033[0m\n");
                 break;
         }
-    }
-    return EXIT_SUCCESS;
+    } while (choix != 0);
+
+    return 0;
 }

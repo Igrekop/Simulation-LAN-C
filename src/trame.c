@@ -1,7 +1,9 @@
 #include "trame.h"
 #include <stdio.h>
 
-// Construction d'une trame Ethernet simple
+// Crée une trame Ethernet avec les paramètres spécifiés
+// Le préambule et le SFD sont des champs de synchronisation
+// Le padding est ajouté si les données font moins de 46 octets (taille minimale d'une trame)
 void creer_trame_ethernet(
     ethernet_frame_t *trame,
     mac_addr_t src,
@@ -11,26 +13,29 @@ void creer_trame_ethernet(
     uint16_t data_len
 ) {
     int i;
+    // Préambule : 7 octets de 0xAA pour la synchronisation
     for (i = 0; i < 7; i++) trame->preambule[i] = 0xAA;
+    // SFD (Start Frame Delimiter) : marque le début de la trame
     trame->sfd = 0xAB;
     trame->dest = dest;
     trame->src = src;
     trame->type = type;
 
-    // Copie manuelle des données
+    // Copie des données avec vérification de la taille maximale
     if (data_len > ETHERNET_MAX_DATA) data_len = ETHERNET_MAX_DATA;
     for (i = 0; i < data_len; i++) trame->data[i] = data[i];
     trame->data_len = data_len;
 
-    // Padding si data < 46 octets
+    // Ajout du padding si nécessaire (trame minimale = 64 octets)
     int padding = (data_len < 46) ? (46 - data_len) : 0;
     for (i = 0; i < padding; i++) trame->bourrage[i] = 0;
 
-    // FCS fictif
+    // FCS (Frame Check Sequence) : somme de contrôle fictive
     trame->fcs = 0xDEADBEEF;
 }
 
-// Affiche une trame de façon lisible
+// Affiche une trame de façon lisible avec des couleurs pour une meilleure lisibilité
+// Inclut l'interprétation du type de trame (IPv4, ARP, IPv6)
 void afficher_trame_utilisateur(const ethernet_frame_t *trame) {
     int i;
     printf("\n\033[1;36m=== Trame Ethernet ===\033[0m\n");
@@ -51,8 +56,8 @@ void afficher_trame_utilisateur(const ethernet_frame_t *trame) {
     printf("\n\033[1;33m  FCS         : \033[0m0x%08x\n", trame->fcs);
 }
 
-
-// Affiche la trame en hexadécimal (brut)
+// Affiche la trame en format hexadécimal brut, utile pour le débogage
+// Affiche tous les champs de la trame, y compris le préambule et le padding
 void afficher_trame_hex(const ethernet_frame_t *trame) {
     int i;
     printf("\n\033[1;36m=== Trame (hex) ===\033[0m\n");
@@ -69,6 +74,7 @@ void afficher_trame_hex(const ethernet_frame_t *trame) {
         printf("%02x ", trame->data[i]);
         if ((i + 1) % 16 == 0) printf("\n          ");
     }
+    // Affichage du padding si présent
     int bourrage_len = (trame->data_len < 46) ? (46 - trame->data_len) : 0;
     if (bourrage_len > 0) {
         printf("\n\033[1;33mBourrage  : \033[0m");
