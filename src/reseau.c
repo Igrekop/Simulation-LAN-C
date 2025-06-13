@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include "reseau.h"
 #include "equipement.h"
+#include "affichage.h"
 
 void afficher_mac(mac_addr_t mac) {
     for (int i = 0; i < MAC_ADDR_LEN; i++) {
@@ -58,17 +59,16 @@ ip_addr_t parse_ip(const char *str) {
 }
 
 // Fonction qui récupère le fichier appelé (réseau_config) et le lit
-// Faire les erreurs
 int charger_reseau_fichier(const char* nom_fichier, reseau_t* reseau) {
-    FILE* fichier = fopen(nom_fichier, "r"); // faire gestion d'erreur car sinn ca risque de planter
+    FILE* fichier = fopen(nom_fichier, "r");
 
-    int nb_equipements_lus; // dans le ficher
-    int nb_liens_lus; // idem
-    fscanf(fichier, "%d %d\n", &nb_equipements_lus, &nb_liens_lus); // lecture du haut du fichier (15 11)
+    int nb_equipements_lus;
+    int nb_liens_lus;
+    fscanf(fichier, "%d %d\n", &nb_equipements_lus, &nb_liens_lus);
 
-    reseau->nb_equipements = nb_equipements_lus; // met dans le réseau le nombre actuel
+    reseau->nb_equipements = nb_equipements_lus;
 
-    char line_buffer[256]; // tableau de char qui lit une ligne entière du fichier
+    char line_buffer[256];
 
     for (int i = 0; i < reseau->nb_equipements; i++) {
         fgets(line_buffer, sizeof(line_buffer), fichier);
@@ -79,10 +79,9 @@ int charger_reseau_fichier(const char* nom_fichier, reseau_t* reseau) {
         char ip_str[20];
         int nb_ports_lue, priorite_lue;
 
-        sscanf(line_buffer, "%d;", &type_equipement_lue); // lit le premier nombre jusqu a : dans "XX:XX"
-        reseau->equipements[i].type = (equip_type_t)type_equipement_lue; // associe la valeure au nom de l'equip
+        sscanf(line_buffer, "%d;", &type_equipement_lue);
+        reseau->equipements[i].type = (equip_type_t)type_equipement_lue;
 
-        // lit en fonction de l'equipement
         if (reseau->equipements[i].type == SWITCH) {
             sscanf(line_buffer + 2, "%17[^;];%d;%d", mac_str, &nb_ports_lue, &priorite_lue);
             reseau->equipements[i].data.sw.mac = convertir_en_mac(mac_str);
@@ -90,16 +89,14 @@ int charger_reseau_fichier(const char* nom_fichier, reseau_t* reseau) {
             reseau->equipements[i].data.sw.priority = priorite_lue;
             for(int j=0; j<MAX_PORTS; j++) {
                 reseau->equipements[i].data.sw.mac_table[j] = (mac_addr_t){0};
-                // table de commutation pas encore faites
             }
-            
-
         } else if (reseau->equipements[i].type == STATION) {
             sscanf(line_buffer + 2, "%17[^;];%15s", mac_str, ip_str);
             reseau->equipements[i].data.station.mac = convertir_en_mac(mac_str);
             reseau->equipements[i].data.station.ip = convertir_en_ip(ip_str);
         }
     }
+
     for (int i = 0; i < reseau->nb_equipements; i++) {
         for (int j = 0; j < reseau->nb_equipements; j++) {
             reseau->liens[i].equip1 = -1;
@@ -107,13 +104,13 @@ int charger_reseau_fichier(const char* nom_fichier, reseau_t* reseau) {
             reseau->liens[i].poids = -1;
         }
     }
+
     for (int k = 0; k < nb_liens_lus; k++) {
         int eq1, eq2, poids;
         fscanf(fichier, "%d;%d;%d\n", &eq1, &eq2, &poids);
         reseau->liens[k].equip1 = eq1;
         reseau->liens[k].equip2 = eq2;
         reseau->liens[k].poids = poids;
-        // idem
     }
 
     // Parcours des liens et mise à jour des ports physiques
@@ -125,12 +122,11 @@ int charger_reseau_fichier(const char* nom_fichier, reseau_t* reseau) {
         for (int j = 0; j < reseau->nb_equipements; j++) {
             if (reseau->liens[i].equip2 >= 0) {
                 if (port < sw->nb_ports) {
-                    sw->port_table[port++] = j; // j = index équipement connecté
+                    sw->port_table[port++] = j;
                 }
             }
         }
 
-        // Initialise les ports restants
         for (; port < MAX_PORTS; port++) {
             sw->port_table[port] = -1;
         }
@@ -162,13 +158,11 @@ void afficher_table_commutation(switch_t* sw) {
     }
 }
 
-// Initialise un réseau vide
 void init_reseau(reseau_t* reseau) {
     reseau->nb_equipements = 0;
     reseau->nb_liens = 0;
 }
 
-// Ajoute une station au réseau
 int ajouter_station(reseau_t* reseau, mac_addr_t mac, ip_addr_t ip) {
     if (reseau->nb_equipements >= MAX_STATIONS + MAX_SWITCHES) {
         printf("Erreur : réseau plein\n");
@@ -183,7 +177,6 @@ int ajouter_station(reseau_t* reseau, mac_addr_t mac, ip_addr_t ip) {
     return 1;
 }
 
-// Ajoute un switch au réseau
 int ajouter_switch(reseau_t* reseau, mac_addr_t mac, int nb_ports, int priority) {
     if (reseau->nb_equipements >= MAX_STATIONS + MAX_SWITCHES) {
         printf("Erreur : réseau plein\n");
@@ -199,9 +192,8 @@ int ajouter_switch(reseau_t* reseau, mac_addr_t mac, int nb_ports, int priority)
     return 1;
 }
 
-// Ajoute un lien entre deux équipements
 int ajouter_lien(reseau_t* reseau, int equip1, int equip2, int poids) {
-    if (reseau->nb_liens >= 128) {
+    if (reseau->nb_liens >= MAX_LIENS) {
         printf("Erreur : nombre maximum de liens atteint\n");
         return 0;
     }

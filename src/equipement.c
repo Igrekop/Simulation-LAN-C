@@ -1,6 +1,7 @@
+#include "affichage.h"
+#include "equipement.h"
 #include <stdio.h>
 #include <string.h>
-#include "equipement.h"
 
 int mac_vide(mac_addr_t mac) {
     for (int i = 0; i < MAC_ADDR_LEN; i++) {
