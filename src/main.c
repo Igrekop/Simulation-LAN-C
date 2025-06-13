@@ -5,7 +5,8 @@
 #include "commutation.h"
 #include "stp.h"
 #include <stdio.h>
-#include <stdlib.h> 
+#include <stdlib.h>
+#include <string.h>
 
 #define NB_MAX_EQUIPEMENTS 64
 
@@ -94,6 +95,39 @@ int propager_trame(
     return 0;
 }
 
+void decoder_donnees(const uint8_t *data, uint16_t data_len) {
+    printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
+    printf("\033[1;36m║\033[0m \033[1;33m📦 Décodage des données reçues\033[0m%*s\033[1;36m║\033[0m\n", 35, "");
+    printf("\033[1;36m╟────────────────────────────────────────────────────────────────╢\033[0m\n");
+    
+    // Affichage en hexadécimal
+    printf("\033[1;36m║\033[0m \033[1;33mHexadécimal :\033[0m ");
+    for (int i = 0; i < data_len; i++) {
+        printf("%02x ", data[i]);
+    }
+    printf("%*s\033[1;36m║\033[0m\n", 40 - (data_len * 3), "");
+    
+    // Affichage en ASCII
+    printf("\033[1;36m║\033[0m \033[1;33mASCII      :\033[0m ");
+    for (int i = 0; i < data_len; i++) {
+        if (data[i] >= 32 && data[i] <= 126) {
+            printf("%c", data[i]);
+        } else {
+            printf(".");
+        }
+    }
+    printf("%*s\033[1;36m║\033[0m\n", 40 - data_len, "");
+    
+    // Affichage en décimal
+    printf("\033[1;36m║\033[0m \033[1;33mDécimal    :\033[0m ");
+    for (int i = 0; i < data_len; i++) {
+        printf("%d ", data[i]);
+    }
+    printf("%*s\033[1;36m║\033[0m\n", 40 - (data_len * 4), "");
+    
+    printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
+}
+
 // Simulation d'une trame entre deux stations
 void simuler_trame_station(reseau_t *reseau, int idx_src, int idx_dest) {
     printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
@@ -109,9 +143,29 @@ void simuler_trame_station(reseau_t *reseau, int idx_src, int idx_dest) {
 
     station_t src = reseau->equipements[idx_src].data.station;
     station_t dest = reseau->equipements[idx_dest].data.station;
-    uint8_t data[] = {0xde, 0xad, 0xbe, 0xef};
+
+    // Saisie des données par l'utilisateur
+    char data_str[ETHERNET_MAX_DATA * 2 + 1];
+    uint8_t data[ETHERNET_MAX_DATA];
+    uint16_t data_len = 0;
+
+    printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
+    printf("\033[1;36m║\033[0m \033[1;33m📝 Saisie des données à envoyer\033[0m%*s\033[1;36m║\033[0m\n", 35, "");
+    printf("\033[1;36m║\033[0m \033[1;33mEntrez les données (max %d octets) :\033[0m%*s\033[1;36m║\033[0m\n", ETHERNET_MAX_DATA, 15, "");
+    printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
+    printf("\033[1;33m> \033[0m");
+    
+    if (fgets(data_str, sizeof(data_str), stdin) != NULL) {
+        data_str[strcspn(data_str, "\n")] = 0; // Supprime le retour à la ligne
+        data_len = strlen(data_str);
+        if (data_len > ETHERNET_MAX_DATA) {
+            data_len = ETHERNET_MAX_DATA;
+        }
+        memcpy(data, data_str, data_len);
+    }
+
     ethernet_frame_t trame;
-    creer_trame_ethernet(&trame, src.mac, dest.mac, 0x0800, data, sizeof(data));
+    creer_trame_ethernet(&trame, src.mac, dest.mac, 0x0800, data, data_len);
     
     printf("\n\033[1;36m=== Trame à envoyer ===\033[0m\n");
     afficher_trame_utilisateur(&trame);
@@ -124,7 +178,11 @@ void simuler_trame_station(reseau_t *reseau, int idx_src, int idx_dest) {
         int voisin = (e1 == idx_src) ? e2 : (e2 == idx_src ? e1 : -1);
         if (voisin != -1) {
             propager_trame(reseau, voisin, idx_src, &trame, idx_dest, &trouve, 1, visited);
-            if (trouve) break;
+            if (trouve) {
+                // Décodage des données reçues
+                decoder_donnees(trame.data, trame.data_len);
+                break;
+            }
         }
     }
     if (!trouve) {
@@ -143,6 +201,7 @@ void afficher_menu_principal() {
     printf("\033[1;36m║\033[0m \033[1;33m1.\033[0m Lancer une simulation de trame      \033[1;36m║\033[0m\n");
     printf("\033[1;36m║\033[0m \033[1;33m2.\033[0m Afficher l'état des ports STP       \033[1;36m║\033[0m\n");
     printf("\033[1;36m║\033[0m \033[1;33m3.\033[0m Afficher les tables MAC             \033[1;36m║\033[0m\n");
+    printf("\033[1;36m║\033[0m \033[1;33m4.\033[0m Afficher la matrice d'adjacence     \033[1;36m║\033[0m\n");
     printf("\033[1;36m║\033[0m \033[1;33m0.\033[0m Quitter                             \033[1;36m║\033[0m\n");
     printf("\033[1;36m╚════════════════════════════════════════╝\033[0m\n");
     printf("\n\033[1;33mVotre choix : \033[0m");
@@ -173,6 +232,54 @@ void afficher_stations_disponibles(reseau_t *reseau) {
     }
     
     printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
+}
+
+void afficher_matrice_adjacence(reseau_t *reseau) {
+    printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
+    printf("\033[1;36m║\033[0m \033[1;33m📊 Matrice d'adjacence du réseau\033[0m%*s\033[1;36m║\033[0m\n", 35, "");
+    printf("\033[1;36m╟────────────────────────────────────────────────────────────────╢\033[0m\n");
+    
+    // En-tête avec les numéros des équipements
+    printf("\033[1;36m║\033[0m     ");
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        printf("%2d ", i);
+    }
+    printf("%*s\033[1;36m║\033[0m\n", 40 - (reseau->nb_equipements * 3), "");
+    
+    // Ligne de séparation
+    printf("\033[1;36m║\033[0m   ─");
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        printf("───");
+    }
+    printf("%*s\033[1;36m║\033[0m\n", 40 - (reseau->nb_equipements * 3), "");
+    
+    // Contenu de la matrice
+    for (int i = 0; i < reseau->nb_equipements; i++) {
+        printf("\033[1;36m║\033[0m %2d │", i);
+        for (int j = 0; j < reseau->nb_equipements; j++) {
+            int poids = -1;
+            for (int k = 0; k < reseau->nb_liens; k++) {
+                if ((reseau->liens[k].equip1 == i && reseau->liens[k].equip2 == j) ||
+                    (reseau->liens[k].equip1 == j && reseau->liens[k].equip2 == i)) {
+                    poids = reseau->liens[k].poids;
+                    break;
+                }
+            }
+            if (poids == -1) {
+                printf(" \033[1;31m.\033[0m ");
+            } else {
+                printf(" \033[1;32m%d\033[0m ", poids);
+            }
+        }
+        printf("%*s\033[1;36m║\033[0m\n", 40 - (reseau->nb_equipements * 3), "");
+    }
+    
+    printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
+    
+    // Légende
+    printf("\n\033[1;33mLégende :\033[0m\n");
+    printf("  \033[1;32m[chiffre]\033[0m : Poids de la liaison entre les équipements\n");
+    printf("  \033[1;31m.\033[0m : Équipements non connectés\n");
 }
 
 // --- Main Function ---
@@ -282,6 +389,9 @@ int main(int argc, char *argv[]) {
                         afficher_table_mac(&reseau.equipements[i].data.sw);
                     }
                 }
+                break;
+            case 4:
+                afficher_matrice_adjacence(&reseau);
                 break;
             case 0: // Quitter
                 printf("\n\033[1;32mAu revoir !\033[0m\n");
