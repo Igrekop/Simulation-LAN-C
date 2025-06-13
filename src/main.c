@@ -39,7 +39,13 @@ int propager_trame(
     visited[courant] = 1;
 
     if (courant == dest_station) {
-        printf("La trame arrive à la station destination (%d) !\n", courant);
+        printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
+        printf("\033[1;36m║\033[0m \033[1;32m🎯 Trame reçue !\033[0m%*s\033[1;36m║\033[0m\n", 45, "");
+        printf("\033[1;36m║\033[0m \033[1;33mStation destination :\033[0m %d%*s\033[1;36m║\033[0m\n", courant, 35, "");
+        printf("\033[1;36m║\033[0m \033[1;33mMAC destination    :\033[0m ");
+        afficher_mac(trame->dest);
+        printf("%*s\033[1;36m║\033[0m\n", 15, "");
+        printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
         *trouve = 1;
         return 1;
     }
@@ -50,20 +56,30 @@ int propager_trame(
         if (precedent != -1) {
             int port_enregistre = switch_rechercher_port(sw, trame->src);
             if (port_enregistre == -1) {
-                printf("Switch %d apprend MAC source : ", courant);
+                printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
+                printf("\033[1;36m║\033[0m \033[1;33m📝 Switch %d apprend une nouvelle adresse MAC\033[0m%*s\033[1;36m║\033[0m\n", courant, 15, "");
+                printf("\033[1;36m║\033[0m \033[1;33mMAC source :\033[0m ");
                 afficher_mac(trame->src);
-                printf(" sur port (voisin) %d\n", precedent);
+                printf("%*s\033[1;36m║\033[0m\n", 25, "");
+                printf("\033[1;36m║\033[0m \033[1;33mPort      :\033[0m %d%*s\033[1;36m║\033[0m\n", precedent, 40, "");
+                printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
                 switch_apprendre_mac(sw, trame->src, precedent);
             }
         }
 
         int port_equip = switch_rechercher_port(sw, trame->dest);
         if (port_equip != -1 && port_equip != precedent) {
-            printf("Switch %d : MAC destination connue, envoie vers équipement %d\n", courant, port_equip);
+            printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
+            printf("\033[1;36m║\033[0m \033[1;33m🔄 Switch %d : MAC destination connue\033[0m%*s\033[1;36m║\033[0m\n", courant, 25, "");
+            printf("\033[1;36m║\033[0m \033[1;33mEnvoi vers l'équipement :\033[0m %d%*s\033[1;36m║\033[0m\n", port_equip, 30, "");
+            printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
             propager_trame(reseau, port_equip, courant, trame, dest_station, trouve, profondeur + 1, visited);
             return 1;
         } else {
-            printf("Switch %d : MAC destination inconnue, inonde tous les ports\n", courant);
+            printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
+            printf("\033[1;36m║\033[0m \033[1;33m🌊 Switch %d : MAC destination inconnue\033[0m%*s\033[1;36m║\033[0m\n", courant, 25, "");
+            printf("\033[1;36m║\033[0m \033[1;33mInondation de tous les ports actifs\033[0m%*s\033[1;36m║\033[0m\n", 20, "");
+            printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
             int i;
             for (i = 0; i < reseau->nb_liens; i++) {
                 int e1 = reseau->liens[i].equip1, e2 = reseau->liens[i].equip2;
@@ -80,10 +96,14 @@ int propager_trame(
 
 // Simulation d'une trame entre deux stations
 void simuler_trame_station(reseau_t *reseau, int idx_src, int idx_dest) {
-    printf("\n--- Simulation d'une trame de la station %d vers la station %d ---\n", idx_src, idx_dest);
+    printf("\n\033[1;36m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
+    printf("\033[1;36m║\033[0m \033[1;33m🚀 Démarrage de la simulation\033[0m%*s\033[1;36m║\033[0m\n", 35, "");
+    printf("\033[1;36m║\033[0m \033[1;33mSource      :\033[0m Station %d%*s\033[1;36m║\033[0m\n", idx_src, 35, "");
+    printf("\033[1;36m║\033[0m \033[1;33mDestination :\033[0m Station %d%*s\033[1;36m║\033[0m\n", idx_dest, 35, "");
+    printf("\033[1;36m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
 
     if (reseau->equipements[idx_src].type != STATION || reseau->equipements[idx_dest].type != STATION) {
-        printf("Erreur: L'indice source ou destination ne correspond pas à une station.\n");
+        printf("\n\033[1;31m❌ Erreur: L'indice source ou destination ne correspond pas à une station.\033[0m\n");
         return;
     }
 
@@ -92,6 +112,8 @@ void simuler_trame_station(reseau_t *reseau, int idx_src, int idx_dest) {
     uint8_t data[] = {0xde, 0xad, 0xbe, 0xef};
     ethernet_frame_t trame;
     creer_trame_ethernet(&trame, src.mac, dest.mac, 0x0800, data, sizeof(data));
+    
+    printf("\n\033[1;36m=== Trame à envoyer ===\033[0m\n");
     afficher_trame_utilisateur(&trame);
 
     int trouve = 0;
@@ -106,7 +128,9 @@ void simuler_trame_station(reseau_t *reseau, int idx_src, int idx_dest) {
         }
     }
     if (!trouve) {
-        printf("La trame n'a pas pu atteindre la station destination...\n");
+        printf("\n\033[1;31m╔════════════════════════════════════════════════════════════════╗\033[0m\n");
+        printf("\033[1;31m║\033[0m \033[1;31m❌ La trame n'a pas pu atteindre la station destination\033[0m%*s\033[1;31m║\033[0m\n", 10, "");
+        printf("\033[1;31m╚════════════════════════════════════════════════════════════════╝\033[0m\n");
     }
 }
 
