@@ -1,4 +1,3 @@
-#include "affichage.h"
 #include "equipement.h"
 #include <stdio.h>
 
@@ -35,48 +34,12 @@ void afficher_switch(switch_t sw) {
 }
 
 // Affichage générique d'un équipement
-void afficher_equipement(equipement_t e) {
-    if (e.type == STATION) {
+void afficher_equipement(equipement_t eq) {
+    if (eq.type == STATION) {
         printf("Station - ");
-        afficher_station(e.data.station);
+        afficher_station(eq.data.station);
     } else {
         printf("Switch - ");
-        afficher_switch(e.data.sw);
+        afficher_switch(eq.data.sw);
     }
 }
-
-void afficher_matrice_adjacence(const reseau_t* reseau) {
-    printf("\nMatrice d'adjacence :\n");
-    printf("    ");
-    for (int i = 0; i < reseau->nb_equipements; i++) {
-        printf("%2d ", i);
-    }
-    printf("\n");
-
-    for (int i = 0; i < reseau->nb_equipements; i++) {
-        printf("%2d  ", i);
-        for (int j = 0; j < reseau->nb_equipements; j++) {
-            int poids = -1;
-            for (int k = 0; k < reseau->nb_liens; k++) {
-                if ((reseau->liens[k].equip1 == i && reseau->liens[k].equip2 == j) ||
-                    (reseau->liens[k].equip1 == j && reseau->liens[k].equip2 == i)) {
-                    poids = reseau->liens[k].poids;
-                    break;
-                }
-            }
-            printf("%2d ", poids);
-        }
-        printf("\n");
-    }
-}
-
-void afficher_reseau(const reseau_t* reseau) {
-    printf("\n=== Réseau ===\n");
-    printf("Nombre d'équipements : %d\n", reseau->nb_equipements);
-    printf("Nombre de liens : %d\n", reseau->nb_liens);
-    printf("\nÉquipements :\n");
-    for (int i = 0; i < reseau->nb_equipements; i++) {
-        printf("Équipement %d : ", i);
-        afficher_equipement(reseau->equipements[i]);
-    }
-} 

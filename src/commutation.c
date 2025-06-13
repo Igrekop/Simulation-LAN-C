@@ -44,4 +44,4 @@ void afficher_table_mac(switch_t *sw) {
         }
         printf("\n");
     }
-} 
+}
